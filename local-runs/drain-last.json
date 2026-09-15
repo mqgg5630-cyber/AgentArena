@@ -1,25 +1,13 @@
 {
   "schemaVersion": "1.0",
-  "ts": "2026-09-15T09:11:24.471Z",
-  "host": "LAPTOP-R77M5D6M",
-  "repoRoot": "/mnt/e/0github/git-sync/agentarena-w1",
-  "cwd": "/mnt/e/0github/git-sync/agentarena-w1",
-  "node": "v20.20.2",
+  "ts": "2026-09-15T08:42:26.565Z",
+  "host": "e2b.local",
+  "repoRoot": "/home/user/AgentArena",
+  "cwd": "/home/user/AgentArena",
+  "node": "v22.22.3",
   "exitCode": 0,
-  "ran": true,
-  "reason": null,
-  "jobsSeen": [
-    {
-      "jobId": "20260915-001-capability-probe",
-      "kind": "probe"
-    }
-  ],
-  "results": [
-    {
-      "jobId": "20260915-001-capability-probe",
-      "state": "succeeded",
-      "outcome": "pass",
-      "error": null
-    }
-  ]
+  "ran": false,
+  "reason": "sandbox-environment (refused)",
+  "jobsSeen": [],
+  "results": []
 }

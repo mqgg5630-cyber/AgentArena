@@ -1,9 +1,9 @@
 {
-    "round":  4,
-    "arena_state":  "awaiting_check",
-    "local_state":  "passed",
-    "arena_updated":  "2026-09-15 09:09:59",
-    "local_updated":  "2026-09-15 17:11:29",
-    "host":  "LAPTOP-R77M5D6M",
-    "note":  "round 4: 原生链应已生效（上一轮 poll 已同步新配置）——通过标准=drain 证据刷新 + probe job 被消费"
+  "round": 4,
+  "arena_state": "accepted",
+  "local_state": "passed",
+  "arena_updated": "2026-09-15 09:12:57",
+  "local_updated": "2026-09-15 17:11:29",
+  "host": "LAPTOP-R77M5D6M",
+  "note": "round 4: 原生链生效，probe 已消费"
 }
