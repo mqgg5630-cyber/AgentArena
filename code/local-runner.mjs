@@ -1272,8 +1272,21 @@ function rejectJob(candidate, settings) {
 
 // -------------------------------------------------------------------- entry
 
+/**
+ * Refuse to drain inside the agent sandbox: jobs are meant for the USER's real
+ * machine (GPU / conda / CLI agents live there). Running a drain here would
+ * consume a queued job and write a meaningless verdict (sandbox host, no GPU)
+ * into the branch - which is exactly what happened once during S2 testing.
+ * Override with --allow-sandbox (e2e tests) or LOCAL_RUNNER_ALLOW_SANDBOX=1.
+ */
+function isSandboxEnvironment() {
+  if (process.env.LOCAL_RUNNER_ALLOW_SANDBOX === "1") return false;
+  const host = os.hostname().toLowerCase();
+  return host === "e2b.local" || host.endsWith(".e2b.local") || REPO_ROOT.startsWith("/home/user/");
+}
+
 function parseArgs(argv) {
-  const options = { drainOnce: true, maxJobs: null, jobId: null, force: false, dryRun: false, selfTest: false };
+  const options = { drainOnce: true, maxJobs: null, jobId: null, force: false, dryRun: false, selfTest: false, allowSandbox: false };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--drain-once") options.drainOnce = true;
@@ -1282,6 +1295,7 @@ function parseArgs(argv) {
     else if (arg === "--force") options.force = true;
     else if (arg === "--dry-run") options.dryRun = true;
     else if (arg === "--self-test") options.selfTest = true;
+    else if (arg === "--allow-sandbox") options.allowSandbox = true;
     else if (arg === "-h" || arg === "--help") {
       console.log("usage: node code/local-runner.mjs [--drain-once] [--max-jobs N] [--job <jobId>] [--force] [--dry-run] [--self-test]");
       return { help: true };
@@ -1328,6 +1342,13 @@ async function main() {
   if (options.help) return 0;
   if (options.usageError) return 2;
   if (options.selfTest) return runSelfTest();
+
+  if (isSandboxEnvironment() && !options.allowSandbox) {
+    log("refused: this looks like the agent sandbox, not the user's machine - jobs belong to the real machine");
+    log("         (use --allow-sandbox or LOCAL_RUNNER_ALLOW_SANDBOX=1 only for e2e tests)");
+    writeDrainReport({ exitCode: 0, ran: false, reason: "sandbox-environment (refused)", jobsSeen: [], results: [] });
+    return 0;
+  }
 
   const settings = loadSettings();
   const lease = readLease();

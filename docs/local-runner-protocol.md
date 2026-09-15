@@ -510,8 +510,10 @@ if (Test-Path '.\code\local-runner.ps1') {
 | `code/local-runner.mjs` | **执行器本体**（Node ≥22，零依赖）：扫队列 → requirements 预检 → 执行 → 摘产物 → 写判定 |
 | `code/local-runner.ps1` | **薄包装**（纯 ASCII）：定位 node 并转发参数，保留文档里的入口名 |
 | `scripts/local-runner-validate.mjs` | **校验器**（零依赖，镜像两份 JSON Schema）：`--job` / `--status`，沙箱侧推之前先自查 |
-| `code/local_check.ps1` | `check_cmd` 挂钩：每轮值守先排空队列（无 job 时 <1s 返回，不影响普通检查） |
-| `local-runs/drain-last.json` | **执行器每轮都写**的结构化证据（`ran`/`reason`/`jobsSeen`/`results`/`exitCode`）；队列没被消费时靠它区分"挂钩没跑"与"跑了但没活" |
+| `code/local_check.sh` | **当前 check_cmd**（原生链）：排空队列 → 跑 gate。**不经 PowerShell**，见 §10.3.2 |
+| `code/local_check.ps1` | 旧挂钩（保留作参考；本机实测 watcher 的 `powershell -File` 链空转，不再作为入口） |
+| `code/drain-and-push.ps1` | **人工兜底一条命令**：排空队列 + 提交 + 推送（不等值守） |
+| `local-runs/drain-last.json` | **执行器每轮都写**（沙箱内被护栏拦下时也写，reason 标 `sandbox-environment`）的结构化证据（`ran`/`reason`/`jobsSeen`/`results`/`exitCode`）；队列没被消费时靠它区分"挂钩没跑"与"跑了但没活" |
 | `results/status/local-runner-drain.txt` | **挂钩自己写**的原始记录（时间/主机/CWD/node 路径/runner 是否存在/队列内容/exit/完整 stdout）——因为 `watch.ps1` 的输出捕获在个别机器上会返回空日志 |
 
 执行器本体用 Node 而不是 PowerShell，是**可验证性**驱动的选择：沙箱里没有 pwsh（改写的东西没法真跑），
@@ -564,6 +566,37 @@ node scripts\local-runner-validate.mjs --job local-runs\jobs\X.job.json   # 校�
 
 > 背景：`watch.ps1` 用 `Invoke-Expression $CheckCmd 2>&1` 捕获检查输出，但在本机实测会返回**空日志且 exit 0**
 > （历史上所有 `results/status/check_rN_*.txt` 都只有两行）。所以不要依赖它来判断执行器有没有跑，以上两个文件才是据。
+
+### 10.3.2 本机实测：watcher 的 PowerShell 检查链空转 → 改用原生链
+
+现象：`results/status/check_r1|r2_*.txt` 恒为两行、exit 0，且**没有任何副作用**（新挂钩写的
+`results/status/local-runner-drain.txt`、`local-runs/drain-last.json` 都不存在）——
+即 `watch.ps1` 里的 `Invoke-Expression 'powershell -NoProfile -ExecutionPolicy Bypass -File code/local_check.ps1'`
+在这台机器上没能真正执行那个脚本（不是因为执行器失败：node 缺失会是 exit 127 → failed）。
+
+处理：`check_cmd` 换成 **`bash code/local_check.sh`**（原生进程，无嵌套 PowerShell）：
+
+```bash
+node code/local-runner.mjs --drain-once   # 排空队列（自带证据）
+bash code/check_all.sh                    # gate
+```
+
+任一失败即非零退出 → 值守判 `failed`。若计划任务的 PATH 上没有 bash，把 `check_cmd` 换回
+`powershell ... code/local_check.ps1`（旧挂钩仍在），或改用 `cmd /c` 包装。
+
+**人工兜底（推荐在排障时用）**：
+
+```powershell
+.\sync.ps1                          # 先拉到最新
+.\code\drain-and-push.ps1          # 排空队列 + 提交 + 推送，一条命令
+```
+
+### 10.3.3 沙箱护栏（别再让 job 死在错误的地方）
+
+执行器在**看起来像 Arena 沙箱**的环境里会拒绝排空（`drain-last.json.reason = "sandbox-environment (refused)"`），
+判据：主机名 `e2b.local`/`*.e2b.local`，或仓库路径以 `/home/user/` 开头。
+原因：S2 测试期间我在沙箱里跑了一次 `--drain-once`，把本该由真机执行的 probe job 吃掉并写入了一份
+**沙箱环境的假判定**（没有 GPU/conda），随后回滚。e2e 测试需要时用 `--allow-sandbox`（或 `LOCAL_RUNNER_ALLOW_SANDBOX=1`）显式放行。
 
 ### 10.4 实现要点（原检查清单）
 

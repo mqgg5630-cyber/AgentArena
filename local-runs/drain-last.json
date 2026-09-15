@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "1.0",
+  "ts": "2026-09-15T08:42:26.565Z",
+  "host": "e2b.local",
+  "repoRoot": "/home/user/AgentArena",
+  "cwd": "/home/user/AgentArena",
+  "node": "v22.22.3",
+  "exitCode": 0,
+  "ran": false,
+  "reason": "sandbox-environment (refused)",
+  "jobsSeen": [],
+  "results": []
+}

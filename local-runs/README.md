@@ -27,6 +27,7 @@
 ## 执行器（本机侧，S2）
 
 ```powershell
+.\code\drain-and-push.ps1            # 一条命令：排空队列 + 提交 + 推送（不等值守，排障首选）
 .\code\local-runner.ps1 -DryRun      # 只看会跑什么（不改任何文件）
 .\code\local-runner.ps1 -DrainOnce   # 排空一轮（值守 local_check.ps1 用的就是这个）
 .\code\local-runner.ps1 -SelfTest    # 纯逻辑自检
