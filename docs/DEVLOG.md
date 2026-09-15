@@ -19,6 +19,41 @@
 - 解法：只落设计（`docs/local-runner-brief.md`、`.skills/local-runner/SKILL.md`）和冒烟检查；不改 `runBenchmark`。后续 job JSON 点名 conda、输出 `results/local-runs/`。
 - 教训/可复用点：[通用] 远端 Agent 要碰主机 GPU/密钥时，用已有 git 握手做 venue，不要在沙箱伪造硬件，也不要把「执行地点」塞进业务 adapter。
 
+## [2026-09-15] 值守无声停摆：wscript+VBS 隐形启动器"成功但什么都没跑"
+
+- 现象/目标：为消除值守每 2 分钟一次的弹窗，v2.4.4 把计划任务改成 `wscript.exe` 调 `%USERPROFILE%\.git-sync\invisible.vbs`；之后 round 2 的真机检查请求挂了 10 分钟无人处理，而 `Get-ScheduledTaskInfo` 显示任务正常执行（LastTaskResult=0）。
+- 根因/思路：包装层依赖 VBScript 宿主，Windows 11 正在退役 VBScript → 计划任务被判"执行成功"，实际脚本被拒、轮询根本没发生。**最坏的一类故障：成功码掩盖了零工作量**，从任务状态、退出码都看不出来，只有"握手时间戳不更新"能暴露。
+- 解法：技能 v2.4.6 回退到久经检验的 `powershell -WindowStyle Hidden`（代价是每次轮询短暂闪窗），零窗口另给实验性 `-Headless`（S4U 登录 → session 0，不走脚本宿主）；本仓库升级到 v2.4.6 并重注册值守。
+- 教训/可复用点：[通用] 消除窗口要用系统原生机制（S4U/session 0），不要用脚本宿主包装层取巧——它会连可观测性一起消掉；任何"隐形/后台"改动上线后必须验证"它真的干活了"（看业务心跳/时间戳），不能只看任务状态与退出码。
+
+## [2026-09-15] 枚举型文档加守卫：judge 类型目录必须与 registry 对齐
+
+- 现象/目标：`.skills` 的 judge 类型清单从 12 漂到 15 无人发现（上一轮修的）；代码侧有 `tests/judge-registry-sync.test.mjs` 守着 registry↔normalizers↔union，**文档侧完全没有守卫**，同类漂移还会再发生。
+- 根因/思路：文档不是代码，CI/测试不覆盖；而且"提及若干类型"和"列举全部类型"语义不同——常见做法（正则抓所有反引号 token）会把 DEVLOG、troubleshooting 这种叙事文档误判成目录，一上线就被迫关掉。
+- 解法：`code/check-doc-judge-sync.mjs`——真源取 `judges/src/index.ts` 的注册调用（免构建），先用 union 成员数与 dist 运行时 registry 双重自检（防正则解析在重构后静默失效）；只把"列表上下文"（内联逗号串 / `- \`type\`` 项 / 表格行）里列举 ≥8 种的文件当目录，校验完整性 + 计数声明（"15 types"/"15 种"）+ 未知 token（拼写错）；历史目录按路径豁免、单文件可用标记退出。已接进 `code/check_all.sh` 第 4 步（提交前门禁 + 本机值守都会跑）。4 个反向测试（计数漂移/漏类型/代码侧新增/拼写错）全部命中。
+- 教训/可复用点：[通用] 守卫"枚举型文档"时，判据要用**列表上下文**而不是关键词出现次数，否则叙事文档必误报；守卫自身也要有交叉自检（换个真源比对），否则解析器一旦失配就变成永远绿灯。
+
+## [2026-09-15] 基线在 Linux 上固定 5 个测试红：平台 shim + 取消时序
+
+- 现象/目标：在沙箱（Linux）跑 `pnpm test` 得 1108 通过 / 5 失败，稳定复现；先确认不是本分支改动引起（本分支相对 main 未触碰 packages/apps/tests）。
+- 根因/思路：① 3 个失败在 `tests/adapters.test.mjs`——qwen/codex 用例把假 CLI 写成 `.cmd` shim（`@echo off`），Linux 上 `spawn` 直接 EACCES，capture 文件不生成；② 2 个失败在 `tests/integration-workflow.test.mjs` / `tests/runner.test.mjs`——取消测试在 `agent-start` 后 `setTimeout(() => controller.abort(), 1000)`，而 demo agent 205–280 ms 就跑完，断言 `status === "cancelled"` 拿到 `success`。
+- 解法：本阶段只记录 + 给修法（取消测试改成可控延迟或轮询确认仍在运行；shim 测试加平台跳过或改跨平台 shim），未改测试代码（阶段边界）。
+- 教训/可复用点：[通用] 用固定 `setTimeout` 模拟"执行中途取消"的测试，等于与执行速度赛跑——机器越快越假红；平台专属 shim（`.cmd`/`.bat`）必须显式跳过或跨平台化，否则沙箱与本地/CI 结论不一致。
+
+## [2026-09-15] 扩展点技能文档漂移：judge 类型 12 → 15 没人跟
+
+- 现象/目标：`.skills/add-judge` 与 `.skills/taskpack-authoring` 仍写"12 种 judge 类型"，实际 15 种（缺 `directory-exists`/`regex-match`/`compilation`）；add-judge 给的文件路径也过时。
+- 根因/思路：judge 类型的**代码**三方同步有 `tests/judge-registry-sync.test.mjs` 守着，但**文档不在守卫范围**；类型 12→15 的三次改动更新了代码与 `docs/taskpack-authoring.md`，唯独漏了 `.skills/`（CI 不会红）。
+- 解法：修正两份 `.skills` 文档（补齐 15 种 + 真实路径：`core/src/types/judge.ts`、`judges/src/judges/<type>.ts`、`taskpacks/src/normalizers.ts` 的 `JUDGE_NORMALIZERS`），并在文中把 registry 指为唯一真源。
+- 教训/可复用点：[通用] 枚举型扩展点文档要么挂到守卫/测试上、要么从注册表生成，只靠"记得改"必然漂移；排查文档过时时，先 grep 出所有重复列举同一枚举的文件。
+
+## [2026-09-15] fork 仓库的 .gitignore 会静默吃掉 git-sync 技能目录（干净克隆必挂 gate）
+
+- 现象/目标：给 AgentArena fork 装 git-sync v2.4.3。旧分支（arena/01a0a356-agentarena）只提交了根目录 .ps1 + code/，`skills/` 整个没进库；于是本机干净克隆里 `code/check_all.sh` 第 2 步（校验 `skills/git-sync/sync.config.json`）必然失败——`local_check.ps1` 第 1 步就是跑这个 gate，等于每轮本机自检都判失败。
+- 根因/思路：`.gitignore` 的 "AI Assistant local configs" 段有 `skills/`（AI 助手模板常见规则），而 `agent-install.sh` 恰好把配置写在 `skills/git-sync/sync.config.json`——安装产物被静默忽略，`git add -A` 永远看不到它；旧分支本机那轮自检能过，是因为本机额外跑过一次本地安装（技能目录在本机存在但不受版本控制）。
+- 解法：`.gitignore` 改 `skills/*` + `!skills/git-sync/`（精确例外，其它 skills/ 仍忽略），技能目录连同配置入库；安装后 `git check-ignore skills/git-sync/sync.config.json` 必须无输出、`bash code/check_all.sh` 必须三项全 OK。
+- 教训/可复用点：[通用] 给任何仓库装 git-sync（或任何"文件型工具"）前，先 `git check-ignore` 目标路径；带 AI 助手忽略规则（skills/ / .claude/ / .codex/ …）的仓库会静默吞掉安装产物，装了却不在库里、本机 clone 缺文件、gate/自检连环失败。
+
 ## [2026-07-16] 工作台 PWA：首次安装 service worker 的 controllerchange 不应 reload
 
 - 现象/目标：加离线 PWA（sw.js + 注册）后，workbench 三个 e2e 报 `errors` 数组非空，命中 `assert.deepEqual(errors, [])`；监控到 `/api/ui-info`、`/api/agent-detection`、`/api/taskpacks`、`/api/provider-profiles` 首屏全部 `net::ERR_ABORTED`。
