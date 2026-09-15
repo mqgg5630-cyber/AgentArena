@@ -1,9 +1,9 @@
 {
-    "round":  2,
-    "arena_state":  "awaiting_check",
-    "local_state":  "passed",
-    "arena_updated":  "2026-09-15 08:30:34",
-    "local_updated":  "2026-09-15 16:31:09",
-    "host":  "LAPTOP-R77M5D6M",
-    "note":  "S2b: 探针 job 20260915-001-capability-probe（队列未消费就顺手看一眼 local-runner-drain.txt）"
+  "round": 2,
+  "arena_state": "accepted",
+  "local_state": "passed",
+  "arena_updated": "2026-09-15 08:31:37",
+  "local_updated": "2026-09-15 16:31:09",
+  "host": "LAPTOP-R77M5D6M",
+  "note": "S2b: 探针 job 20260915-001-capability-probe（队列未消费就顺手看一眼 local-runner-drain.txt）"
 }
