@@ -1,9 +1,9 @@
 {
-  "round": 2,
-  "arena_state": "awaiting_check",
-  "local_state": "pending",
-  "arena_updated": "2026-09-15 07:52:30",
-  "local_updated": null,
-  "host": "",
-  "note": "round 2：门禁新增 judge 文档一致性守卫（code/check-doc-judge-sync.mjs）——验证本机 node 下守卫可跑、gate 四项全过（含 5 个文档目录对齐）"
+    "round":  2,
+    "arena_state":  "awaiting_check",
+    "local_state":  "passed",
+    "arena_updated":  "2026-09-15 07:52:30",
+    "local_updated":  "2026-09-15 16:25:11",
+    "host":  "LAPTOP-R77M5D6M",
+    "note":  "round 2：门禁新增 judge 文档一致性守卫（code/check-doc-judge-sync.mjs）——验证本机 node 下守卫可跑、gate 四项全过（含 5 个文档目录对齐）"
 }
