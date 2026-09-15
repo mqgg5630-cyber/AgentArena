@@ -64,14 +64,14 @@
   - `code/local_check.ps1` → **theirs**（冲突块仅为注释建议段，3ee 版为 AgentArena pnpm 项目定制，活动代码两侧一致）
 - **新规则登记（本回合起生效）**：各会话的 `results/status/work-report.md` 并入时改名为**一会话一份**——`work-report-3ee.md` 已建立。后续 3d6/其它分支并入时同样处理（`work-report-3d6.md`…），消除反复 add/add 冲突。
 
-### 2. 真机回归：进行中（被本机值守缺口阻塞）
+### 2. 真机回归：当时超时 → 现已通过（诊断见 J1 更正）
 
 - `agent-wait.sh --request "merge regression: 3ee S1 (9855ece)" --auto-accept`：轮询 900 s → **exit 3（超时仍 pending，非失败）**
-- 诊断：handshake `local_state=pending`、`host=""`——本机值守任务**未覆盖汇总分支克隆**（3ee/3d6 分支的值守在线，其请求正被处理）
+- ~~诊断：handshake `local_state=pending`、`host=""`——本机值守任务未覆盖汇总分支克隆~~ → **【更正 J1，2026-09-15 08:38 UTC，用户通报根因】**：并非"汇总克隆未被值守覆盖"，而是 **v2.4.4 的 wscript+invisible.vbs 无窗启动器全线静默失效**（Windows 11 弃用 VBScript）：所有值守任务实际都死了，计划任务的 `LastTaskResult 0` 是假象。结构性修复＝本轮回合升级 **v2.4.6**（回退 `powershell -WindowStyle Hidden`，另有实验性 `-Headless` S4U），见巡检 #3-§4。
 - 处置：**超时不构成回滚条件**（回滚仅针对 exit 2 失败），合并保持；回归请求已推送，值守上线后轮询即自动处理，下轮 `--read` 读结果。
 - 待 3ee 回归 exit 0 → 立即执行第 3 节的 356 合并。**未通过回归的合并不向上堆叠**（防回滚复杂化）。
 
-### 3. 待触发：356 文档并入 + 旧分支删除
+### 3. ~~待触发~~ 已执行完毕：356 文档并入 + 旧分支删除 → 全过程见巡检 #3-§2/§3
 
 - 已备好合并对象清单：`docs/local-runner-brief.md`（本地 runner 设计）、`docs/DEVLOG.md`、硬件报告（04:47）、`handshake.json`、`check_r1_*.txt` 日志；技能文件其侧为 v2.3.5 且未入库 → 合并时**技能/.ps1/.gitignore/config/回执一律 ours（v2.4.5 高版本胜出）**，`docs/DEVLOG.md` 与既有内容做按时间并集
 - **3d5 防丢核查完成**：独有文件仅 `results/sync/history/` 三份历史回执（技能衍生物，无交付物）→ 删除安全
@@ -84,6 +84,59 @@
 - **下轮合并目标（预登记）**：3d6 分支**最新 accepted 检查点**（当前为 `cf624fc`，覆盖 `4578489`；若下轮巡检时 round-2 已 accepted，顺延至新检查点），合并前按规则 `agent-check.sh --read` 复核
 - 预期冲突：`results/status/work-report.md`（按新规则改名 `work-report-3d6.md`）、`docs/DEVLOG.md`（与 356 并入内容按时间并集）
 
-### 5. 待用户处置（本轮仅 1 项，其余已全部自决/关闭）
+### 5. 待用户处置（本轮当时 1 项，已由用户修复完毕，见巡检 #3）
 
-- **本机值守缺口**：汇总会话分支的克隆尚无值守。请在汇总分支克隆目录执行一次 `.\watch.ps1`（立即处理当前 pending 的回归请求），或 `.\watch.ps1 -Register -Interval 2` 注册常驻。回归结果出来后我自动继续第 3 节触发链，无需再等指令。
+- ~~**本机值守缺口**：汇总会话分支的克隆尚无值守……~~ → 用户已修复值守并完成根因通报（**J1 更正**：v2.4.4 VBS 启动器全线失效，非覆盖缺口）；后续回归已实测 92 秒出结果。
+
+---
+
+## 巡检 #3 ＋ 合并轮 #2 ＋ 旧分支清理 — 2026-09-15 08:38 UTC
+
+### 1. 回归裁决补齐：3ee S1 合并 **通过**
+
+- round-1 `merge regression: 3ee S1 (9855ece)`：`local=passed`（host LAPTOP-R77M5D6M，本机 16:25 / UTC 08:25）→ `agent-check.sh --accept` 闭环 ✔
+- **合并正式成立**，无回滚。
+
+### 2. 已执行：合并 356 文档成果（`1a3156d`）
+
+- 并入重点：`docs/local-runner-brief.md`（真机 venue 设计，**防丢目标达成**）、DEVLOG「venue 与 adapter 解耦」条、硬件史（04:47）、其 round-1 检查日志与 2 份历史回执
+- 冲突 7 处处置：
+  - `docs/DEVLOG.md` → **按时间并集**（两条 09-15 条目全保留：协议选型在上、venue 设计在其后）
+  - ours 6 处：`code/local_check.ps1`（保 3ee 定制版）、`results/hardware/latest.*`（保 07:46 新版）、`results/status/handshake.json`（保存活握手）、`results/sync/last_sync.md`、**`watch.ps1`（保 v2.4.5——356 侧为 v2.4.4 VBS 失效启动器，坚决不回退）**
+- 实测更正（推翻巡检 #1 引用的旧表格信息）：356 侧 `skills/git-sync/` 与 S1 协议文档**实际未入库**（`.gitignore` 吞），故合并零技能冲突、协议 v1.0 天然无损
+- 合并后 gate 三项 OK；`git merge-base --is-ancestor` 校验 356 tip 已入祖先链 ✔
+
+### 3. 356 回归 **通过** → 旧分支已删除
+
+- round-2 `merge regression: 356 docs (1a3156d)`：**92 秒 PASSED** → `--auto-accept` 闭环（exit 0，本机值守修复后首次全程在线验证）
+- 执行 `git push origin --delete arena/01a0a356-agentarena arena/01a0a3d5-agentarena` ✔
+  - 356：tip `2bcc53b` 已确认是合并祖先，**零历史丢失**
+  - 3d5：tip `6e48b20`，独产物审计＝仅 3 份历史回执（技能衍生物，零交付物）；删除后提交在远端变不可达——如需取回，30 天+ 窗口内可按 SHA 重建分支（留念于此）
+- 远端现存分支：`main`、`arena/01a0a3f1`（汇总）、`arena/01a0a3ee`（工1）、`arena/01a0a3d6`（工2）——回到规划的三分支结构
+
+### 4. 技能升级 v2.4.5 → **v2.4.6**（J1 根因的结构性修复）
+
+- `agent-install.sh` 重跑完成，**既有 config 全保留**（branch/download_sets/gate 等）；gate 三项 OK
+- 变更内容（3 文件）：`VERSION` 2.4.6；`watch.ps1` 弃用 wscript+invisible.vbs 无窗启动器 → 回退 `powershell -WindowStyle Hidden`（每次轮询有短暂窗口闪现）；新增实验性 `-Headless`（S4U 登录、session 0、零窗口；若凭据隔离导致推送失败，去掉 `-Headless` 重注册即可）
+- 本机侧动作（各克隆一次）：`.\sync.ps1` 后 `.\watch.ps1 -Register`（或 `-Register -Headless` 试无窗）重注册值守任务，即换新启动器
+
+### 5. 工作分支进度记录（按用户指名）
+
+| 分支 | 提交 | 交付 | 自身真机验证 |
+|---|---|---|---|
+| 工1 3ee | `593ee48` | **S2 执行器**：`code/local-runner.mjs`（1435 行 Node 本体）+ ASCII 包装 ps1 + 零依赖校验器 + `local_check` 队列挂钩 + 首个真机 probe job + 协议/schema 更新；work-report 自拆 w1 | 分支 round-2（S2b 探针 `20260915-001-capability-probe`）**passed → accepted** ✔（tip `aeabad3`） |
+| 工2 3d6 | `09823bd` | **文档↔judge registry 一致性守卫**：`code/check-doc-judge-sync.mjs`（335 行）+ 接入 `code/check_all.sh` 门禁 + work-report 迁 w2 + DEVLOG | 分支 round-2 **passed → accepted** ✔（`6802318`）；后续 `ff9b3ec`（A6 字段实操清单 + v2.4.6 + VBS 停摆 DEVLOG）round-3 已 passed、待工2 自己 accept（tip `f6c74bf`） |
+
+### 6. 命名规则收敛（自决登记）
+
+- 两条工作分支已自行迁移到 `work-report-w1.md` / `work-report-w2.md`，与巡检 #2 登记的"一会话一份"一致——**采用其 w1/w2 命名为准**：本分支的 `work-report-3ee.md` 在下一次 3ee 合并时迁移对齐为 `work-report-w1.md`（按 incoming 内容覆盖更新）。
+
+### 7. 下一轮合并预登记（触发条件：用户指令或任一分支新 accepted 点出现）
+
+1. **工1 3ee @`aeabad3`**（S1+S2+探针，已 accepted）：合并 → 回归。预期冲突仅 `local_check.ps1`（3ee S2 为其加了队列挂钩，取 theirs——那是 S2 交付物本身）、`sync.config.json`/回执/握手（ours）。
+2. **工2 3d6 @`6802318`**（或届时更新的 accepted 点）：合并 → 回归。预期冲突：`work-report.md`（收为 `work-report-w2.md`）、`code/check_all.sh`（**取 theirs**——guard 接入门禁是交付物；合并后在沙箱+本机双侧复核 node 可用性）。
+3. 两条合并若同轮，仍坚持"一次合并一次回归"、"验证未过不堆叠"。
+
+### 8. 待用户裁决：**0 项**
+
+- 巡检 #1 三问已全部执行关闭；J1 诊断更正完毕；旧分支删除完毕；技能已随裁决升 v2.4.6。下一轮合并对象已具备全部前置条件，等令即动。
