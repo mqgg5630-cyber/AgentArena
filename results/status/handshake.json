@@ -1,9 +1,9 @@
 {
-  "round": 3,
-  "arena_state": "awaiting_check",
-  "local_state": "pending",
-  "arena_updated": "2026-09-15 09:07:01",
-  "local_updated": null,
-  "host": "",
-  "note": "round 3: 原生链验证（bash code/local_check.sh）——通过标准=本机 drain 证据文件 + probe job 被消费"
+    "round":  3,
+    "arena_state":  "awaiting_check",
+    "local_state":  "passed",
+    "arena_updated":  "2026-09-15 09:07:01",
+    "local_updated":  "2026-09-15 17:07:08",
+    "host":  "LAPTOP-R77M5D6M",
+    "note":  "round 3: 原生链验证（bash code/local_check.sh）——通过标准=本机 drain 证据文件 + probe job 被消费"
 }
