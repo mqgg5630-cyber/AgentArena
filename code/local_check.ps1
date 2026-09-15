@@ -33,7 +33,41 @@ if (Test-Path -LiteralPath '.\code\check_all.sh') {
 #     Write-Host '[FAIL] deliverable\final.pptx missing' -ForegroundColor Red; $fail = 1
 # }
 
-# 3. add your own checks here ...
+# 3. local-runner design docs must be present (host-watch venue)
+$docs = @(
+    '.skills\local-runner\SKILL.md',
+    'docs\local-runner-brief.md'
+)
+foreach ($d in $docs) {
+    if (-not (Test-Path -LiteralPath $d)) {
+        Write-Output "[FAIL] missing $d"
+        $fail = 1
+    } else {
+        $len = (Get-Item -LiteralPath $d).Length
+        if ($len -lt 200) {
+            Write-Output "[FAIL] $d too small ($len bytes)"
+            $fail = 1
+        } else {
+            Write-Output "[OK] $d ($len bytes)"
+        }
+    }
+}
+
+# 4. npm install smoke (no full pnpm build). Prefer npm because it is
+#    on PATH for most Windows Node installs; skip network if offline.
+if (Get-Command npm -ErrorAction SilentlyContinue) {
+    Write-Output '== npm install --ignore-scripts --no-audit --no-fund (smoke)'
+    npm install --ignore-scripts --no-audit --no-fund --prefer-offline
+    if ($LASTEXITCODE -ne 0) {
+        Write-Output '[FAIL] npm install smoke failed'
+        $fail = 1
+    } else {
+        Write-Output '[OK] npm install smoke'
+    }
+} else {
+    Write-Output '[FAIL] npm not on PATH'
+    $fail = 1
+}
 
 if ($fail -eq 0) { Write-Output '== local checks passed' }
 exit $fail

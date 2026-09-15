@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-09-15] local-runner：真机 venue 与 adapter 解耦，复用 git-sync 值守
+
+- 现象/目标：沙箱/Docker runner 没有用户 Windows 上的 GTX 1650 与 ~22 个 conda；需要把 benchmark 执行放到本机并回传。
+- 根因/思路：Adapter 描述「如何调某个 CLI」，Runner 描述「如何编排一次 run」。缺的是 **venue**（进程跑在哪台机器），不是第 13 个 adapter。git-sync 的 handshake + `watch.ps1` + `local_check.ps1` 已是本机执行通道。
+- 解法：只落设计（`docs/local-runner-brief.md`、`.skills/local-runner/SKILL.md`）和冒烟检查；不改 `runBenchmark`。后续 job JSON 点名 conda、输出 `results/local-runs/`。
+- 教训/可复用点：[通用] 远端 Agent 要碰主机 GPU/密钥时，用已有 git 握手做 venue，不要在沙箱伪造硬件，也不要把「执行地点」塞进业务 adapter。
+
 ## [2026-07-16] 工作台 PWA：首次安装 service worker 的 controllerchange 不应 reload
 
 - 现象/目标：加离线 PWA（sw.js + 注册）后，workbench 三个 e2e 报 `errors` 数组非空，命中 `assert.deepEqual(errors, [])`；监控到 `/api/ui-info`、`/api/agent-detection`、`/api/taskpacks`、`/api/provider-profiles` 首屏全部 `net::ERR_ABORTED`。
