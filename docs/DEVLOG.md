@@ -5,6 +5,20 @@
 
 ---
 
+## [2026-09-15] 值守"通过"但日志零输出：exit 0 不是证据
+
+- 现象/目标：本机所有克隆的真机检查日志**都只有两行**（`verdict` + `cmd`）、零输出、`exit 0`——本会话 r1–r3、356 分支 r1、总部仓库 r4–r6 全一样；期间还发生过"守护没跑但任务报成功"（VBS 事件）。
+- 根因/思路：链路三层（`watch.ps1` 的 `Invoke-Expression` → `powershell -File code/local_check.ps1` → `bash code/check_all.sh`）任一层静默，verdict 都看不出来；且未执行任何 native 命令时 `$LASTEXITCODE` 会保留旧值（可能是 0）→ 空转与真跑无法区分。总部 v2.4.7 已为此加 `elapsed: Ns` + 空输出显式标记（注释记录 w1 克隆是靠"副作用文件缺失"才发现空转）。
+- 解法：升级 v2.4.7（记录耗时、空输出显式化）；若耗时≈0 或仍无输出，则在本机检查链首行加固定标记并显式捕获 stderr、无输出即判失败。
+- 教训/可复用点：[通用] 后台/隐形验证链的"通过"只等于退出码为 0；至少要有一条**必然出现**的输出行（自检标记）与耗时，否则永远无法区分"真跑"与"空转"。
+
+## [2026-09-15] bump-build 写回被跟踪的 package.json → 多会话必然冲突
+
+- 现象/目标：本分支 `package.json` 的 `buildNumber` 一天内被改三次（我提交 16 → 值守侧提交 17 → accept 回退 15），每次都是无意义 commit。
+- 根因/思路：`scripts/bump-build.js` 在 `pnpm build` 的 prebuild 阶段 +1 并写回**被跟踪**的 `package.json`；两个方向的提交都用 `git add -A`，于是"构建"变成"改动"，多分支并行时合并几乎必然在此冲突（还可能出现版本号回退）。
+- 解法：本次回退为基线值并在 work-report 报备；建议上游二选一：① 构建号写入被忽略的生成文件（`.agentarena/`、`build/`）由 `copy-cli-assets.mjs` 读取；② 提交前对该字段做还原/排除。
+- 教训/可复用点：[通用] 构建期自增的计数器不要回写被跟踪的源文件——与 `git add -A` 型提交叠加后必然产生冲突与噪声 commit。
+
 ## [2026-09-15] 值守无声停摆：wscript+VBS 隐形启动器"成功但什么都没跑"
 
 - 现象/目标：为消除值守每 2 分钟一次的弹窗，v2.4.4 把计划任务改成 `wscript.exe` 调 `%USERPROFILE%\.git-sync\invisible.vbs`；之后 round 2 的真机检查请求挂了 10 分钟无人处理，而 `Get-ScheduledTaskInfo` 显示任务正常执行（LastTaskResult=0）。

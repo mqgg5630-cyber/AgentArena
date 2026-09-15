@@ -11,6 +11,7 @@
 # Usage (inside the repo folder):
 #     .\watch.ps1 -Register              # once per machine: create the task
 #     .\watch.ps1 -Register -Interval 10 # poll every 10 minutes instead of 2
+#     .\watch.ps1 -Register -Headless    # zero window (S4U; ADMIN console!)
 #     .\watch.ps1                        # one manual poll right now
 #     .\watch.ps1 -Pause                 # stop polling (task stays registered)
 #     .\watch.ps1 -Resume                # start polling again
@@ -18,8 +19,13 @@
 #
 # The task runs as the current user "only when logged on" and reuses the git
 # credentials Windows already has (the ones push.ps1 uses). Each poll briefly
-# flashes a console window; -Headless registers the task with an S4U logon
-# (session 0, zero window) instead - experimental, revert if pushes stop.
+# flashes a console window (default: every 2 minutes). Against the flash:
+#   - fewer flashes: re-register with a longer -Interval
+#   - zero window:   -Headless (S4U logon, session 0). Field-tested
+#     2026-09-15: registering or switching a task to S4U needs an ELEVATED
+#     (admin) PowerShell - a normal console fails with access denied
+#     0x80070005. Under S4U pushes may also stop (credential isolation) -
+#     if so, revert from the same elevated prompt.
 #
 # ASCII-only on purpose (Windows PowerShell 5.1 decodes .ps1 as ANSI/GBK).
 
@@ -108,7 +114,9 @@ if ($Register -or $Unregister) {
     # were left silently dead (LastTaskResult 0 but nothing actually ran).
     # For ZERO window use -Headless: the task logs on via S4U and runs in
     # session 0, no VBS involved. If pushes stop working under -Headless
-    # (credential isolation), re-register without it.
+    # (credential isolation), re-register without it. S4U registration
+    # requires an ELEVATED console (admin) - non-admin fails with access
+    # denied 0x80070005 (field-tested 2026-09-15).
     $arg = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f $PSCommandPath
     try {
         $action  = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arg
@@ -135,7 +143,7 @@ if ($Register -or $Unregister) {
     Write-Host "== remove any time with:  .\watch.ps1 -Unregister"
     Write-Host "== pause / resume:        .\watch.ps1 -Pause  /  .\watch.ps1 -Resume"
     if ($Headless) { Write-Host "== headless mode: runs in session 0, no window at all (experimental)" }
-    else { Write-Host "== note: each poll briefly flashes a console; -Headless = none (experimental)" }
+    else { Write-Host "== note: each poll briefly flashes a console; -Headless = none (needs ADMIN console, experimental)" }
     exit 0
 }
 
@@ -188,6 +196,7 @@ try {
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $logAbs) | Out-Null
     Write-Host ("== running: {0}" -f $CheckCmd)
     $code = 1
+    $t0 = Get-Date
     try {
         $out = Invoke-Expression $CheckCmd 2>&1
         $code = $LASTEXITCODE
@@ -196,8 +205,16 @@ try {
         $out = $_.Exception.Message
         $code = 1
     }
+    $secs = [int]((Get-Date) - $t0).TotalSeconds
     $verdict = if ($code -eq 0) { 'passed' } else { 'failed' }
-    $text = @("check round $round on $env:COMPUTERNAME - $verdict (exit $code)", "cmd: $CheckCmd", "") + @($out)
+    # field lesson 2026-09-15 (agentarena-w1): a dead check_cmd chain can
+    # exit 0 with ZERO output, and every round then "passes" vacuously - it
+    # was only caught because side-effect files were missing. Record the
+    # elapsed time and make an empty run explicit so the next reader smells
+    # a silent no-op immediately instead of trusting the exit code alone.
+    $outLines = @($out | Where-Object { "$_" -match '\S' })
+    if ($outLines.Count -eq 0) { $outLines = @('(check_cmd produced no output; if elapsed is near 0 this pass may be a silent no-op - verify the check really ran)') }
+    $text = @("check round $round on $env:COMPUTERNAME - $verdict (exit $code)", "cmd: $CheckCmd", "elapsed: ${secs}s", "") + $outLines
     $utf8 = New-Object System.Text.UTF8Encoding($false)
     [System.IO.File]::WriteAllText($logAbs, ($text -join "`r`n"), $utf8)
     Write-Host ("== check {0} (log: {1})" -f $verdict, $logRel) -ForegroundColor $(if ($code -eq 0) { 'Green' } else { 'Red' })
