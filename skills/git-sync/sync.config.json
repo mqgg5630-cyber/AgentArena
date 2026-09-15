@@ -1,0 +1,31 @@
+{
+  "branch": "arena/01a0a3f1-agentarena",
+  "remote": "origin",
+  "download_dir": "",
+  "download_sets": {
+    "final": [
+      "deliverable"
+    ]
+  },
+  "upload_map": {
+    ".docx": "sources",
+    ".doc": "sources",
+    ".pptx": "sources",
+    ".ppt": "sources",
+    ".pdf": "sources",
+    ".md": "sources",
+    ".txt": "sources",
+    ".zip": "sources",
+    ".py": "code",
+    ".ipynb": "code",
+    ".xlsx": "results",
+    ".xls": "results",
+    ".csv": "results"
+  },
+  "gate": "bash code/check_all.sh",
+  "receipt": "results/sync/last_sync.md",
+  "receipt_history": "results/sync/history",
+  "hardware_dir": "results/hardware",
+  "handshake": "results/status/handshake.json",
+  "check_cmd": "powershell -NoProfile -ExecutionPolicy Bypass -File code/local_check.ps1"
+}

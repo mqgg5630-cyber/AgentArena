@@ -45,7 +45,8 @@ coverage/
 .qwen/
 .sisyphus/
 .trae/
-skills/
+skills/*
+!skills/git-sync/
 .specs/
 .skills/
 
