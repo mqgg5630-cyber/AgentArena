@@ -140,3 +140,34 @@
 ### 8. 待用户裁决：**0 项**
 
 - 巡检 #1 三问已全部执行关闭；J1 诊断更正完毕；旧分支删除完毕；技能已随裁决升 v2.4.6。下一轮合并对象已具备全部前置条件，等令即动。
+
+---
+
+## 巡检 #4 ＋ 合并轮 #3（w2 进门）＋ 里程碑 M1 — 2026-09-15 09:18 UTC
+
+### 1. 指令① 已执行：合并工作 2（3d6）@`ca534b1`（round-3 已 accepted 的 tip）
+
+- 合并提交 `747ccbd`，并入：judge 文档一致性守卫（`code/check-doc-judge-sync.mjs`，335 行）+ **门禁第 4 步接入**（按指令 `code/check_all.sh` 取 theirs）+ 架构梳理 A1-A10（`docs/benchmark-adapter-architecture-review.md`）+ A6 字段实操清单（`docs/adding-result-fields.md`）+ `.skills` judge 类型漂移修复（12→15）+ judge-registry 基线测试平台记录 + `work-report-w2.md` + 其 R1-R3 检查日志
+- 冲突 10 处处置：**check_all.sh→theirs（指令）**；DEVLOG→按时间并集（09-15 现 7 条全留）；其余 8 处 ours（v2.4.7 技能件、`sync.config.json` 分支私有、握手/回执、`.gitignore`、保 S2 挂钩的 `local_check.ps1`）
+- 合并后 gate **7 项全绿**（沙箱 node v22.22.3）：ps1 ASCII / config 分支 / 根↔技能脚本一致 / 15 judge 类型 registry ↔ union ↔ **5 份文档目录**（.skills×2 + README×2 + taskpack-authoring.md）全对齐
+- **真机回归 round-3 passed（184 s，LAPTOP-R77M5D6M）→ --auto-accept 闭环（exit 0）**——含新守卫的 7 项门禁在真机同样全过
+
+### 2. 指令③ 里程碑 M1：值守首次全自动闭环（2026-09-15）
+
+- 值守修复后，**连续两轮合并回归零人工介入**：合并推送 → `--request` → 本机值守 ≤2 min 轮询拾取 → 真机跑 gate（7 项）→ passed 回传 → `--auto-accept` 收尾。round-2 用时 92 s、round-3 用时 184 s
+- 本机值守现状：`powershell -WindowStyle Hidden` 每轮一次短暂闪窗；追求零窗口可 `.\watch.ps1 -Register -Headless`（S4U）——注意 **v2.4.7 实测记录：注册/切换 S4U 需要管理员 PowerShell**（普通窗口报 0x80070005），且 S4U 下推送可能因凭据隔离失效，失效就在同一管理员窗口改回普通注册
+
+### 3. 指令② 记录：w1（3ee）暂缓进门
+
+- 卡点对象：`b359f59`——check_cmd 改**原生链**（`bash code/local_check.sh`，绕开会空转的 `powershell -File`）+ 人工兜底 `drain-and-push.ps1` + 沙箱护栏（防 job 在沙箱被消费）
+- 现状：其分支 round-3 已 pushed `d61df0a check: round 3 passed`，**尚未被 3ee 自己 accept**
+- **进门条件（用户指令 + 预登记）**：round-3 在真机留下 **drain 证据**（`local-runs/` 队列被原生链实际排空、`drain-and-push` / check 日志可查）且 3ee accept 闭环 → 合并其 accepted tip
+- 3ee 合并冲突预案（预登记）：`code/local_check.ps1`→**theirs**（原生链+S2 挂钩即交付物本体）；新增件（`local-runner.mjs`、`local_check.sh`、`drain-and-push.ps1`、沙箱护栏）自动并入；`work-report-w1.md` 自动并入后，把本分支旧版 `work-report-3ee.md` 标记/迁移为 w1 存档；DEVLOG 并集；技能件 ours（v2.4.7）；config/回执/握手 ours
+
+### 4. 总部 v2.4.7 已并入（本轮第一棒，`392acc8`）
+
+- 变更：VERSION + watch.ps1——`-Headless` S4U 注册实测发现的**管理员权限要求与凭据隔离回退法**写入脚本头注释（见 §2 末条）；配置全保留，gate 通过
+
+### 5. 待用户裁决：**0 项**
+
+- 当前唯一在途：3ee round-3 的 drain 证据 → 其 accept → 触发我合并 w1（预案已就绪，事件驱动自动执行，无需额外指令）。
