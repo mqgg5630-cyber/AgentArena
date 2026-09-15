@@ -1,9 +1,9 @@
 {
-    "round":  1,
-    "arena_state":  "awaiting_check",
-    "local_state":  "passed",
-    "arena_updated":  "2026-09-15 04:34:28",
-    "local_updated":  "2026-09-15 12:48:31",
-    "host":  "LAPTOP-R77M5D6M",
-    "note":  "验证文档在位 + npm install 冒烟"
+  "round": 1,
+  "arena_state": "accepted",
+  "local_state": "passed",
+  "arena_updated": "2026-09-15 04:50:34",
+  "local_updated": "2026-09-15 12:48:31",
+  "host": "LAPTOP-R77M5D6M",
+  "note": "验证文档在位 + npm install 冒烟"
 }
