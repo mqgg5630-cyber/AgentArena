@@ -1,0 +1,32 @@
+{
+  "branch": "arena/01a0a3d6-agentarena",
+  "remote": "origin",
+  "download_dir": "",
+  "download_sets": {
+    "final": ["results", "docs"],
+    "skill": ["skills/git-sync", "code"],
+    "all":   ["results", "docs", "code", "skills/git-sync"]
+  },
+  "upload_map": {
+    ".docx": "sources",
+    ".doc":  "sources",
+    ".pptx": "sources",
+    ".ppt":  "sources",
+    ".pdf":  "sources",
+    ".md":   "sources",
+    ".txt":  "sources",
+    ".zip":  "sources",
+    ".py":   "code",
+    ".ipynb": "code",
+    ".xlsx": "results",
+    ".xls":  "results",
+    ".csv":  "results"
+  },
+  "gate": "bash code/check_all.sh",
+  "receipt": "results/sync/last_sync.md",
+  "receipt_history": "results/sync/history",
+  "hardware_dir": "results/hardware",
+  "handshake": "results/status/handshake.json",
+  "check_cmd": "powershell -NoProfile -ExecutionPolicy Bypass -File code/local_check.ps1",
+  "_note": "branch/remote = this Arena session's working branch; download_sets = what .\\download.ps1 -Set can mirror (AgentArena has no deliverable/ dir, so final = results + docs); gate = pre-commit check for agent-sync.sh; check_cmd = what your local watch.ps1 runs on request. Config lookup order: -Config > sync.config.<GIT_SYNC_PROFILE>.json > this file."
+}

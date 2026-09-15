@@ -45,7 +45,12 @@ coverage/
 .qwen/
 .sisyphus/
 .trae/
-skills/
+# generic AI-assistant skill folders stay local-only ...
+skills/*
+# ... except the git-sync tooling: the machine <-> agent two-way sync needs its
+# scripts + sync.config.json under version control (code/check_all.sh reads them,
+# and a fresh clone must pass the gate). See skills/git-sync/SKILL.md.
+!skills/git-sync/
 .specs/
 .skills/
 
