@@ -23,13 +23,24 @@
 2. **候选 B**：AgentArena 本体任务（benchmark / 报告页 / adapter），按你指定范围做。
 3. 未指认前，本会话**不主动改 `packages/`、`apps/` 下代码**，避免与其它工作会话撞车。
 
-## 三、需要汇总会话仲裁的点
+## 三、分支实况与需要汇总会话仲裁的点
 
-1. **同仓库多会话重复安装**：`arena/01a0a3d5-agentarena` 与 `arena/01a0a3d6-agentarena` 装了同一套技能，仅两处文本差异：
-   - `skills/git-sync/sync.config.json`：`branch` 值不同（**合并时必须按各自分支保留，不能交叉覆盖**）；`download_sets` 本会话为 `final = results + docs`、`skill`、`all`（按真实目录），3d5 另有 `reports` / `docs` / `code` 等集合。
-   - `.gitignore`：两边的反排除写法相同，仅注释措辞不同（合并取任一）。
-   - 建议：**技能文件（`skills/git-sync/**`、根目录 `.ps1`、`code/*`）在合并到 main 时只保留一份**（版本号高的胜出），`sync.config.json` 不进 main（各分支自持）。
-2. `arena/01a0a3d5-agentarena` 是否弃用由用户确认；弃用后由存活会话 `git push origin --delete arena/01a0a3d5-agentarena`。
+**远端分支清单（截至本文件最近一次更新，`gh api repos/.../AgentArena/branches` 实测）：**
+
+| 分支 | 装了技能？ | 技能版本 | 备注 |
+|---|---|---|---|
+| `arena/01a0a356-agentarena` | 精简安装 | v2.3.5 | 最早那轮；`skills/` **未入库**（被 `.gitignore` 吞），干净克隆跑 gate 会失败 |
+| `arena/01a0a3d5-agentarena` | 是 | v2.4.3 | 已开反排除；`download_sets` 含 `reports`/`docs`/`code` |
+| `arena/01a0a3d6-agentarena` | 是 | **v2.4.5** | **本会话（工作会话 2）**；`final`/`skill`/`all` 已按真实目录 |
+| `arena/01a0a3ee-agentarena` | 是 | **v2.4.5** | 第三条会话分支；`download_sets` 为本仓库最全版本（含 `code`/`packages`/`apps`…） |
+| `arena/01a0a3de-agentarena` | — | — | **远端尚不存在**（会话未执行首次推送） |
+| `arena/01a0a3e6-agentarena` | — | — | **远端尚不存在**（同上） |
+
+1. **多会话重复安装同一套技能**：`356 / 3d5 / 3d6 / 3ee` 四份。差异只在：
+   - `skills/git-sync/sync.config.json`：`branch` 值不同（**合并时必须按各自分支保留，绝不能交叉覆盖**）；`download_sets` 详略不同（3ee 最全，本会话次之）。
+   - `.gitignore`：反排除写法一致（`skills/*` + `!skills/git-sync/`），仅注释措辞不同。
+   - 建议：技能文件（`skills/git-sync/**`、根目录 `.ps1`、`code/*`）**合并到 main 时只保留一份**（版本号高者胜出，即 v2.4.5）；`sync.config.json` 属分支私有，不建议进 main。
+2. **旧会话分支建议弃用由用户确认**：`356`（技能未入库，无复用价值）与 `3d5`（若确认已停用）；确认后由存活会话执行 `git push origin --delete arena/01a0a3d5-agentarena`。注意：删除前确认该分支没有小数量独有产物（目前看只有技能文件与本仓库无关的重复回执）。
 
 ## 四、你（本机）要做的事
 
