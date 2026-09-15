@@ -1,9 +1,9 @@
 {
-    "round":  1,
-    "arena_state":  "awaiting_check",
-    "local_state":  "passed",
-    "arena_updated":  "2026-09-15 07:56:30",
-    "local_updated":  "2026-09-15 16:25:15",
-    "host":  "LAPTOP-R77M5D6M",
-    "note":  "merge regression: 3ee S1 (9855ece)"
+  "round": 1,
+  "arena_state": "accepted",
+  "local_state": "passed",
+  "arena_updated": "2026-09-15 08:29:34",
+  "local_updated": "2026-09-15 16:25:15",
+  "host": "LAPTOP-R77M5D6M",
+  "note": "3ee S1 merge regression passed (LAPTOP-R77M5D6M)"
 }
