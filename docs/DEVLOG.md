@@ -5,6 +5,20 @@
 
 ---
 
+## [2026-09-15] 基线在 Linux 上固定 5 个测试红：平台 shim + 取消时序
+
+- 现象/目标：在沙箱（Linux）跑 `pnpm test` 得 1108 通过 / 5 失败，稳定复现；先确认不是本分支改动引起（本分支相对 main 未触碰 packages/apps/tests）。
+- 根因/思路：① 3 个失败在 `tests/adapters.test.mjs`——qwen/codex 用例把假 CLI 写成 `.cmd` shim（`@echo off`），Linux 上 `spawn` 直接 EACCES，capture 文件不生成；② 2 个失败在 `tests/integration-workflow.test.mjs` / `tests/runner.test.mjs`——取消测试在 `agent-start` 后 `setTimeout(() => controller.abort(), 1000)`，而 demo agent 205–280 ms 就跑完，断言 `status === "cancelled"` 拿到 `success`。
+- 解法：本阶段只记录 + 给修法（取消测试改成可控延迟或轮询确认仍在运行；shim 测试加平台跳过或改跨平台 shim），未改测试代码（阶段边界）。
+- 教训/可复用点：[通用] 用固定 `setTimeout` 模拟"执行中途取消"的测试，等于与执行速度赛跑——机器越快越假红；平台专属 shim（`.cmd`/`.bat`）必须显式跳过或跨平台化，否则沙箱与本地/CI 结论不一致。
+
+## [2026-09-15] 扩展点技能文档漂移：judge 类型 12 → 15 没人跟
+
+- 现象/目标：`.skills/add-judge` 与 `.skills/taskpack-authoring` 仍写"12 种 judge 类型"，实际 15 种（缺 `directory-exists`/`regex-match`/`compilation`）；add-judge 给的文件路径也过时。
+- 根因/思路：judge 类型的**代码**三方同步有 `tests/judge-registry-sync.test.mjs` 守着，但**文档不在守卫范围**；类型 12→15 的三次改动更新了代码与 `docs/taskpack-authoring.md`，唯独漏了 `.skills/`（CI 不会红）。
+- 解法：修正两份 `.skills` 文档（补齐 15 种 + 真实路径：`core/src/types/judge.ts`、`judges/src/judges/<type>.ts`、`taskpacks/src/normalizers.ts` 的 `JUDGE_NORMALIZERS`），并在文中把 registry 指为唯一真源。
+- 教训/可复用点：[通用] 枚举型扩展点文档要么挂到守卫/测试上、要么从注册表生成，只靠"记得改"必然漂移；排查文档过时时，先 grep 出所有重复列举同一枚举的文件。
+
 ## [2026-09-15] fork 仓库的 .gitignore 会静默吃掉 git-sync 技能目录（干净克隆必挂 gate）
 
 - 现象/目标：给 AgentArena fork 装 git-sync v2.4.3。旧分支（arena/01a0a356-agentarena）只提交了根目录 .ps1 + code/，`skills/` 整个没进库；于是本机干净克隆里 `code/check_all.sh` 第 2 步（校验 `skills/git-sync/sync.config.json`）必然失败——`local_check.ps1` 第 1 步就是跑这个 gate，等于每轮本机自检都判失败。

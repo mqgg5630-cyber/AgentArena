@@ -13,15 +13,36 @@
 
 | 轮次 | 提交 | 内容 | 验证状态 |
 |---|---|---|---|
-| 3 | 见最新提交 | 升级 git-sync v2.4.5（config 保留）+ 建立本文件 | 沙箱：installer 输出 3×OK、`.gitignore` 未被二次改写；本机：待 `agent-wait --auto-accept` |
+| 4 | 见最新提交 | **调研线第一阶段**：`docs/benchmark-adapter-architecture-review.md`（流水线 §1、契约同步点 §2、**适配点清单 A1–A10** §3、文档漂移 §4）；修 `.skills/add-judge` + `.skills/taskpack-authoring` 的 judge 类型 12→15 与过时路径；DEVLOG 加 2 条 | 沙箱**实跑**：`pnpm install/build` 通过，`pnpm test` = 1124 项 / 1108 过 / 5 红（5 个均与本分支无关，根因见 §"基线红点"） |
+| 3 | `5139093` / `4987b8c` | 升级 git-sync v2.4.5（config 保留）+ 建立本文件 + 分支实况表 | 沙箱：installer 3×OK、`.gitignore` 未被二次改写 |
 | 2 | `2925c01` | `docs/DEVLOG.md`：记录「fork 仓库 `.gitignore` 吞掉 `skills/` → 干净克隆必挂 gate」[通用] | — |
 | 1 | `e657a3e` | 安装 git-sync：`skills/git-sync/`（28 文件）入库 + 根目录 10 个 `.ps1` + `code/check_all.sh` + `code/local_check.ps1`；`.gitignore` 改 `skills/*` + `!skills/git-sync/`；`download_sets` 按真实目录改（`final = results + docs`） | **沙箱已验证**：干净克隆 `bash code/check_all.sh` 三项全 OK |
 
-## 二、下一个任务（待你/汇总会话指认）
+## 二、下一个任务 / 阶段候选
 
-1. **候选 A（本会话已具备条件）**：把 `docs/local-runner-brief.md` 的「真机 venue」从设计落到 `runBenchmark`（job JSON 点名 conda 环境 → 本机 `watch.ps1` 执行 → 产物回 `results/local-runs/`）。
-2. **候选 B**：AgentArena 本体任务（benchmark / 报告页 / adapter），按你指定范围做。
-3. 未指认前，本会话**不主动改 `packages/`、`apps/` 下代码**，避免与其它工作会话撞车。
+**本会话职责（用户 2026-09-15 指认）**：工作会话 2 · **仓库调研与文档线** —— 架构梳理、适配点清单、DEVLOG 维护；
+**不碰**工作会话 1（3ee）的 local-runner 执行协议与其文档文件；**不合并**其它分支（归汇总会话 3f1 管）。
+
+下一阶段候选（按建议优先级，等指认）：
+
+1. **文档一致性守卫**（本线自然延伸）：加一条测试/脚本，把 `.skills/*` 与 `docs/*` 里出现的 judge 类型清单
+   与 `judgeTypeRegistry` 对齐——现有 CI 守卫只覆盖代码三方同步，**文档没有守卫**，这次 12→15 的漂移就是这么漏的。
+2. **测试硬化（需认领，非本线默认范围）**：修 5 个基线红点中的时序类与平台类（详见 `docs/benchmark-adapter-architecture-review.md` §6）。
+3. **venue 章节补写**：工作会话 1 的协议定型后，由文档线往 `docs/architecture-decisions.md` 增补一节
+   （避免与其文件冲突，所以**等**）。
+4. 备选：把 A6（新增结果字段的完整清单：core → runner → report → view-model → i18n）写成实操文档。
+
+---
+
+## 二·附、基线红点（全员相关，非本会话引入）
+
+本分支相对 `main` 未触碰 `packages/`、`apps/`、`tests/`，因此下列失败在 `main` 上同样存在（Linux 环境）：
+
+- **3 个 Windows 专属 shim 测试**：`tests/adapters.test.mjs` 的 qwen/codex 用例用 `.cmd` shim，Linux `spawn` → `EACCES`。
+- **2 个取消语义测试时序脆弱**：`agent-start` 后固定 `setTimeout(abort, 1000)`，demo agent 205–280 ms 就结束 →
+  断言 `status === "cancelled"` 失败；**机器越快越容易红**（Windows/慢机器上反而可能绿）。
+
+⇒ 汇总会话合并到 main 后跑 CI 若见 5 红，先对照本节，不要误判为某分支引入。
 
 ## 三、分支实况与需要汇总会话仲裁的点
 
@@ -33,6 +54,7 @@
 | `arena/01a0a3d5-agentarena` | 是 | v2.4.3 | 已开反排除；`download_sets` 含 `reports`/`docs`/`code` |
 | `arena/01a0a3d6-agentarena` | 是 | **v2.4.5** | **本会话（工作会话 2）**；`final`/`skill`/`all` 已按真实目录 |
 | `arena/01a0a3ee-agentarena` | 是 | **v2.4.5** | 第三条会话分支；`download_sets` 为本仓库最全版本（含 `code`/`packages`/`apps`…） |
+| `arena/01a0a3f1-agentarena` | 是 | v2.4.5 | **汇总会话（3f1）**：负责 fetch 他人分支 → merge → 门禁 → 真机回归；状态记 `results/status/integration.md` |
 | `arena/01a0a3de-agentarena` | — | — | **远端尚不存在**（会话未执行首次推送） |
 | `arena/01a0a3e6-agentarena` | — | — | **远端尚不存在**（同上） |
 

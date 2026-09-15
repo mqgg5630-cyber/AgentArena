@@ -21,7 +21,10 @@ Start from an example in `examples/taskpacks/official/` rather than writing from
 
 ## Judge Types
 
-12 types available: `command`, `test-result`, `lint-check`, `file-exists`, `file-contains`, `json-value`, `json-schema`, `glob`, `file-count`, `snapshot`, `patch-validation`, `token-efficiency`.
+15 types available: `command`, `test-result`, `lint-check`, `file-exists`, `file-contains`, `json-value`, `json-schema`, `glob`, `file-count`, `snapshot`, `patch-validation`, `token-efficiency`, `directory-exists`, `regex-match`, `compilation`.
+
+The canonical list is the `judgeTypeRegistry` (`packages/judges/src/index.ts`), guarded by
+`tests/judge-registry-sync.test.mjs` — update this line whenever a type is added or removed.
 
 Each judge requires at minimum: `type`, `label`, and type-specific fields. All judges support optional `critical: true`.
 

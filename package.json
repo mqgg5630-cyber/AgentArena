@@ -1,7 +1,7 @@
 {
   "name": "agentarena",
   "version": "0.1.0",
-  "buildNumber": 15,
+  "buildNumber": 17,
   "private": true,
   "description": "Open-source benchmark and replay tool for comparing AI coding agents in real repositories.",
   "repository": {
