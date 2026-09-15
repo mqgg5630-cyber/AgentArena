@@ -10,12 +10,16 @@
 #
 # Usage (inside the repo folder):
 #     .\watch.ps1 -Register              # once per machine: create the task
-#     .\watch.ps1 -Register -Interval 10 # poll every 10 minutes instead of 5
+#     .\watch.ps1 -Register -Interval 10 # poll every 10 minutes instead of 2
 #     .\watch.ps1                        # one manual poll right now
+#     .\watch.ps1 -Pause                 # stop polling (task stays registered)
+#     .\watch.ps1 -Resume                # start polling again
 #     .\watch.ps1 -Unregister            # remove the scheduled task
 #
 # The task runs as the current user "only when logged on" and reuses the git
-# credentials Windows already has (the ones push.ps1 uses).
+# credentials Windows already has (the ones push.ps1 uses). Since v2.4.4 the
+# task launches through %USERPROFILE%\.git-sync\invisible.vbs (wscript), so
+# the polls run with NO console window flash at all.
 #
 # ASCII-only on purpose (Windows PowerShell 5.1 decodes .ps1 as ANSI/GBK).
 
@@ -23,7 +27,9 @@ param(
     [int]$Interval = 2,
     [string]$Config = '',
     [switch]$Register,
-    [switch]$Unregister
+    [switch]$Unregister,
+    [switch]$Pause,
+    [switch]$Resume
 )
 
 $ErrorActionPreference = 'Continue'
@@ -73,6 +79,20 @@ if (-not $Branch) { $Branch = (git rev-parse --abbrev-ref HEAD).Trim() }
 
 $taskName = 'git-sync-watch-' + (Split-Path -Leaf $repo)
 
+# ----------------------------------------------------------- pause / resume
+if ($Pause) {
+    $null = Disable-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+    if ($?) { Write-Host "== paused : $taskName  (no polling until .\watch.ps1 -Resume)" -ForegroundColor Green }
+    else { Write-Host "[ERROR] task not found: $taskName (nothing to pause)" -ForegroundColor Red }
+    exit 0
+}
+if ($Resume) {
+    $null = Enable-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+    if ($?) { Write-Host "== resumed: $taskName  (polling again)" -ForegroundColor Green }
+    else { Write-Host "[ERROR] task not found: $taskName - run .\watch.ps1 -Register first" -ForegroundColor Red }
+    exit 0
+}
+
 # ------------------------------------------------------------ register task
 if ($Register -or $Unregister) {
     if ($Unregister) {
@@ -81,9 +101,23 @@ if ($Register -or $Unregister) {
         else { schtasks /Delete /TN $taskName /F 2>$null; Write-Host "== removed (schtasks): $taskName" }
         exit 0
     }
-    $arg = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f $PSCommandPath
+    # hidden launcher: a plain "powershell -WindowStyle Hidden" task still
+    # flashes a console on every poll (annoying at a 2-minute cadence), so the
+    # task launches wscript with this tiny vbs that runs the poll with NO
+    # window at all. Kept in %USERPROFILE%\.git-sync\ - outside any repo, so
+    # add -A can never sweep it into a commit.
+    $vbsDir = Join-Path $env:USERPROFILE '.git-sync'
+    $vbs = Join-Path $vbsDir 'invisible.vbs'
+    if (-not (Test-Path -LiteralPath $vbsDir)) { New-Item -ItemType Directory -Force -Path $vbsDir | Out-Null }
+    if (-not (Test-Path -LiteralPath $vbs)) {
+        $vbsText = "' git-sync watcher launcher - run a command with no window flash`r`n" +
+                   'CreateObject("WScript.Shell").Run WScript.Arguments(0), 0, False'
+        [System.IO.File]::WriteAllText($vbs, $vbsText)
+    }
+    $inner = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"{0}\"' -f $PSCommandPath
+    $arg = '"{0}" "{1}"' -f $vbs, $inner
     try {
-        $action  = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arg
+        $action  = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument $arg
         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
                     -RepetitionInterval (New-TimeSpan -Minutes $Interval) `
                     -RepetitionDuration (New-TimeSpan -Days 3650)
@@ -100,6 +134,8 @@ if ($Register -or $Unregister) {
     Write-Host "   and run this check when the agent requests one:"
     Write-Host "     $CheckCmd"
     Write-Host "== remove any time with:  .\watch.ps1 -Unregister"
+    Write-Host "== pause / resume:        .\watch.ps1 -Pause  /  .\watch.ps1 -Resume"
+    Write-Host "== the polls run through an invisible launcher (no console flash)"
     exit 0
 }
 

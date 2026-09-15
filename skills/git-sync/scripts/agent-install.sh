@@ -172,6 +172,23 @@ then
   exit 3
 fi
 
+# 3b. some repos ignore skills/ entirely (AgentArena does) - the skill would
+# stay untracked and a clean clone would fail the gate. Detect and un-ignore:
+# a bare 'skills/' line is rewritten as the exclude-all-but-one dance (a
+# plain '!skills/git-sync/' cannot re-include under an excluded parent dir)
+if git -C "$REPO" check-ignore -q "skills/git-sync/sync.config.json" 2>/dev/null; then
+  if grep -qx 'skills/' "$REPO/.gitignore" 2>/dev/null; then
+    sed -i 's|^skills/$|skills/*\n!skills/git-sync/|' "$REPO/.gitignore"
+  else
+    printf '\n# git-sync skill must be tracked (un-ignored by agent-install.sh)\n!skills/git-sync/\n' >> "$REPO/.gitignore"
+  fi
+  if git -C "$REPO" check-ignore -q "skills/git-sync/sync.config.json" 2>/dev/null; then
+    echo "WARN: skills/git-sync is still git-ignored - fix .gitignore manually (a parent dir pattern excludes it)" >&2
+  else
+    echo "OK: skills/git-sync un-ignored in .gitignore (was swallowed by a skills/ rule)"
+  fi
+fi
+
 # 4. the user-side scripts at the repo root
 for f in sync push upload download pack doctor bootstrap pr hardware watch; do
   if [ -f "$REPO/skills/git-sync/scripts/$f.ps1" ]; then

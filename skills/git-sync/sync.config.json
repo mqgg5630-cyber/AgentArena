@@ -3,24 +3,35 @@
   "remote": "origin",
   "download_dir": "",
   "download_sets": {
-    "final": ["results", "docs"],
-    "skill": ["skills/git-sync", "code"],
-    "all":   ["results", "docs", "code", "skills/git-sync"]
+    "final": [
+      "results",
+      "docs"
+    ],
+    "skill": [
+      "skills/git-sync",
+      "code"
+    ],
+    "all": [
+      "results",
+      "docs",
+      "code",
+      "skills/git-sync"
+    ]
   },
   "upload_map": {
     ".docx": "sources",
-    ".doc":  "sources",
+    ".doc": "sources",
     ".pptx": "sources",
-    ".ppt":  "sources",
-    ".pdf":  "sources",
-    ".md":   "sources",
-    ".txt":  "sources",
-    ".zip":  "sources",
-    ".py":   "code",
+    ".ppt": "sources",
+    ".pdf": "sources",
+    ".md": "sources",
+    ".txt": "sources",
+    ".zip": "sources",
+    ".py": "code",
     ".ipynb": "code",
     ".xlsx": "results",
-    ".xls":  "results",
-    ".csv":  "results"
+    ".xls": "results",
+    ".csv": "results"
   },
   "gate": "bash code/check_all.sh",
   "receipt": "results/sync/last_sync.md",
