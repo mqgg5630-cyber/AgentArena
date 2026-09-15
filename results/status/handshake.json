@@ -1,9 +1,9 @@
 {
-    "round":  2,
-    "arena_state":  "awaiting_check",
-    "local_state":  "passed",
-    "arena_updated":  "2026-09-15 08:34:01",
-    "local_updated":  "2026-09-15 16:35:15",
-    "host":  "LAPTOP-R77M5D6M",
-    "note":  "merge regression: 356 docs (1a3156d)"
+  "round": 2,
+  "arena_state": "accepted",
+  "local_state": "passed",
+  "arena_updated": "2026-09-15 08:35:34",
+  "local_updated": "2026-09-15 16:35:15",
+  "host": "LAPTOP-R77M5D6M",
+  "note": "merge regression: 356 docs (1a3156d)"
 }
