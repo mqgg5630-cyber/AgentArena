@@ -28,6 +28,18 @@ if (Test-Path -LiteralPath '.\code\check_all.sh') {
     if ($LASTEXITCODE -ne 0) { Write-Output '[FAIL] gate failed'; $fail = 1 }
 }
 
+# 1b. local-runner queue (docs/local-runner-protocol.md): drain
+#     local-runs/jobs/ when an agent session queued a job. With no queued job
+#     this returns in well under a second and never affects normal checks.
+#     Exit code of the drainer: 0 = nothing to do / all jobs clean,
+#     1 = at least one job failed or timed out (that must fail this check).
+if (Test-Path -LiteralPath '.\code\local-runner.ps1') {
+    $drainer = Join-Path $PSHOME 'powershell.exe'
+    if (-not (Test-Path -LiteralPath $drainer)) { $drainer = 'powershell' }
+    & $drainer -NoProfile -ExecutionPolicy Bypass -File .\code\local-runner.ps1 -DrainOnce
+    if ($LASTEXITCODE -ne 0) { Write-Output '[FAIL] local-runner: a queued job failed (see local-runs/results/)'; $fail = 1 }
+}
+
 # 2. AgentArena-specific checks (pnpm monorepo: packages/ + apps/ + tests/).
 #    Enable the ones that fit; the heavier ones cost a few minutes.
 #    Note: keep this file ASCII-only (Windows PowerShell 5.1 / GBK).

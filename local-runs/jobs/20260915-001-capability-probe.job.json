@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "20260915-001-capability-probe",
+  "createdAt": "2026-09-15T08:20:00Z",
+  "kind": "probe",
+  "requestedBy": {
+    "branch": "arena/01a0a3ee-agentarena",
+    "session": "arena-01a0a3ee"
+  },
+  "reason": "S2 真机首跑：只读巡检（agentarena CLI 是否可解析 / GPU / conda 环境 / 硬件报告新鲜度 / node+pnpm），据此决定下一个 benchmark job 用哪些 agent 和环境",
+  "spec": {
+    "probe": "capability"
+  },
+  "timeoutSeconds": 120,
+  "priority": 1,
+  "idempotencyKey": "capability-20260915",
+  "artifacts": {
+    "mode": "manifest-only"
+  },
+  "notes": "只读探测，不安装/不修改任何东西；若硬件报告缺失会在 probe.json.checks 与 notes 里标注，等本机 .\\hardware.ps1 -Deep 推上来即可。"
+}

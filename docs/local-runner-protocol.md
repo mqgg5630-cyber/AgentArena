@@ -190,6 +190,7 @@ local-runs/
 | `nvidia-smi` | `nvidia-smi` | 驱动/CUDA/显存快照 |
 | `conda-env-list` | `conda env list` | 环境清单（判断该用哪个 env） |
 | `agentarena-version` | `agentarena --version` + `git rev-parse HEAD` | 版本 + 提交锚点 |
+| `capability` | 复合巡检（**不改文件**）：CLI 解析结果、node/pnpm/git、GPU、conda 环境清单、磁盘/内存、硬件报告新鲜度 | `probe.json`；`checks[]` 逐项 ok/detail。**排长任务前先跑它**，一轮就能确定"这机器现在能跑什么" |
 
 探测类 job 的产物小、价值高：**沙箱在排长任务前先探一次**，比跑一半才发现"本机没有 codex"便宜得多。
 
@@ -275,8 +276,7 @@ local-runs/
 | `options.resume` | `--resume <runDir>` | 断点续跑（同 job 重试时可用） |
 | `options.locale` | `--locale en\|zh-CN` | |
 | —（执行器固定追加） | `--output local-runs/.work/<jobId>` | run 落到 `.work/`（不进 git），产物再按 §6 摘取 |
-| —（执行器固定追加） | `--json` | 最终摘要进 `console.log`，可解析 |
-| —（执行器固定追加） | `--json-events`（可选） | NDJSON 进度事件流 → `console.ndjson`（失败时保留，便于定位卡点） |
+| —（执行器固定追加，二选一） | `--json`（默认）**或** `--json-events`（`options.jsonEvents: true` 时） | **两者互斥**（`args.ts` 会直接报错）。两种模式**最后一行都是可解析的 JSON 摘要**：`--json` 打一个对象（`--repeat >1` 时为 `{repeat, runs}`），`--json-events` 打 `{"type":"summary","runs":[...]}`（`packages/cli/src/commands/run.ts`）。`jsonEvents` 打开时同时把 NDJSON 事件流写入 `console.ndjson`（失败时保留，用来定位卡在哪一步） |
 
 **`variantId` 是派生值，不要在 job 里写**：`createAgentSelection()` 按
 `baseAgentId[-profile][-model][-reasoning]` 生成（`packages/core/src/utils.ts`）。job 只声明
@@ -400,6 +400,9 @@ queued ──lease──> leased ──start──> running ──┬─> succee
   * `manifest-only`：只回 `status.json` + `artifacts.json` + `console.log`（尾 200 行）——**最小**，适合长任务或产物很大时；
   * `summary`（默认）：+ `summary.json`、`report.html`、`decision-report.md`、`results.csv`、`trend.md`（存在才带）；
   * `full`：再带 `agents/*/result.json`、`summary.json` 全量、trace 摘要（仍受 `maxFileMb` 限制）。
+* `local-runs/.gitignore` 用负例 `!console.log` / `!console.ndjson` 把回传日志救回来（仓库根 `.gitignore` 有通用 `*.log`，否则会被静默吞掉）；验证只看 `git add -A -n` 的真实结果。
+* 固定回传：`status.json`、`artifacts.json`、`console.log`（头部含 jobId/命令/退出码/耗时，默认尾部 2000 行）；
+  `probe` job 另带 `probe.json`；`jsonEvents` 打开且任务失败时带 `console.ndjson`。
 * **硬上限**：单文件 25 MB、单 job 100 MB。超限一律 `committed:false` + 本机路径（`pack.ps1` 打包或网盘流转），
   避免触发 `doctor.ps1` 的 >50 MB tracked 警告与仓库膨胀。
 * 大产物登记：`role=bundle` 的条目必须带 `localPath`，沙箱据此告诉你"要拿就用 `.\pack.ps1` / `.\download.ps1 -Set final`"。
@@ -415,8 +418,9 @@ queued ──lease──> leased ──start──> running ──┬─> succee
 {"ts":"2026-09-15T07:49:05Z","jobId":"20260915-001-demo-smoke","event":"pushed","commit":"abc1234"}
 ```
 
-`event` 取值：`queued | leased | started | heartbeat(不打日志) | finished | artifact-skipped | pushed | acked | rejected`。
-台账只记"发生了什么"，判定细节一律以 `status.json` 为准。
+`event` 取值：`queued | leased | started | finished | rejected`，**由本机执行器独占写入**（沙箱不要写这个文件，避免双写）。
+`pushed`（读到的 commit）与 `acked` 由沙箱侧按需追加（可选）；判定细节一律以 `status.json` 为准。
+**收尾归档**：执行器在写终态后把 job 原件移到 `jobs/archive/`（幂等复用与策略拒绝同样归档），队列里不会留残件。
 
 ### 6.4 `ack.json`（沙箱侧回执）
 
@@ -497,16 +501,71 @@ if (Test-Path '.\code\local-runner.ps1') {
 6. `agents[].baseAgentId` 都是 `agentarena list-adapters` 里有、本机 `doctor` 里 ready 的吗？
 7. 需要 install/pip/conda 操作？那不属于 job（本机主权）——写进 `reason`/`notes` **请你手动执行**，不要用 `command` 绕过。
 
-## 10. 本机侧检查清单（执行器实现要点，阶段 2）
+## 10. 执行器（S2 已落地）
 
-1. `*.job.json` 才入队；`idempotencyKey` 命中终态直接复用（不重复烧 token）。
-2. 租约先写后跑；心跳更新 `heartbeatAt`；异常退出下一轮自愈。
-3. `requirements` 先验后跑；不满足 → fail-fast，**不降级**。
-4. 输出只往 `.work/` 与 `results/` 写；路径收敛在仓库根内。
-5. 日志同时落 `console.log`（截尾）与 `console.ndjson`（失败时保留）。
-6. 退出码：有终态 `failed/timed_out` → 非零（让 `local_check.ps1` 判 failed）；全 `succeeded/skipped(策略)` → 0。
-7. `.ps1` 全 ASCII（PowerShell 5.1 GBK 解码坑，见 `skills/git-sync/SKILL.md` 铁律 1），中文只进 `.md`/`.json`。
-8. 跑完不论成败都写 `status.json` + `artifacts.json` + `ledger.jsonl`，再 archive job 原件。
+### 10.1 组成与为什么是 Node
+
+| 文件 | 角色 |
+|---|---|
+| `code/local-runner.mjs` | **执行器本体**（Node ≥22，零依赖）：扫队列 → requirements 预检 → 执行 → 摘产物 → 写判定 |
+| `code/local-runner.ps1` | **薄包装**（纯 ASCII）：定位 node 并转发参数，保留文档里的入口名 |
+| `scripts/local-runner-validate.mjs` | **校验器**（零依赖，镜像两份 JSON Schema）：`--job` / `--status`，沙箱侧推之前先自查 |
+| `code/local_check.ps1` | `check_cmd` 挂钩：每轮值守先排空队列（无 job 时 <1s 返回，不影响普通检查） |
+
+执行器本体用 Node 而不是 PowerShell，是**可验证性**驱动的选择：沙箱里没有 pwsh（改写的东西没法真跑），
+而 PowerShell 5.1 的 `ConvertTo-Json` 会把单元素数组塌成对象，正好是 `artifacts[]` / `scores[]` / `unmet[]` 最要命的地方。
+`.ps1` 仍然存在且 ASCII-only（gate 会查），只是不再承载业务逻辑。
+
+### 10.2 手工用法（本机）
+
+```powershell
+.\code\local-runner.ps1 -DryRun                       # 只看会跑什么（不改任何文件）
+.\code\local-runner.ps1 -DrainOnce                    # 排空一轮（值守用的就是这个）
+.\code\local-runner.ps1 -Job 20260915-001-capability-probe -Force   # 指定 job 重跑（attempt+1）
+.\code\local-runner.ps1 -SelfTest                     # 纯逻辑自检，不碰队列
+node scripts\local-runner-validate.mjs --job local-runs\jobs\X.job.json   # 校验 job
+```
+
+退出码：`0` 无活可干 / 选中的 job 都干净（`succeeded` 或策略 `skipped`）；`1` 有 job `failed`/`timed_out`；
+`2` 用法错；`3` 内部错；`127` 找不到 node 或执行器。**`local_check.ps1` 只看这个退出码**——非 0 即 handshake 判 failed。
+
+### 10.3 本机策略：`local-runs/state/settings.json`（不进 git）
+
+样例见 `local-runs/settings.example.json`（拷到 `local-runs/state/settings.json` 再改）：
+
+```jsonc
+{
+  "maxJobsPerDrain": 1,                 // 一轮跑几个 job
+  "maxParallelAgents": 2,               // 未指定 options.maxConcurrency 时的默认值
+  "allowedKinds": ["benchmark", "probe"],
+  "allowRiskyCommands": false,          // kind=command 的总闸（默认关）
+  "allowedProbes": ["capability", "hardware", "doctor", "nvidia-smi", "conda-env-list", "agentarena-version"],
+  "arenaCli": null,                     // 例如 "agentarena"，或 ["node","<dist>/index.js"] 用 arenaCliArgs
+  "arenaCliArgs": [],
+  "artifactPolicy": { "defaultMode": "summary", "maxFileMb": 5, "maxTotalMb": 20 },
+  "defaultTimeoutSeconds": { "benchmark": 3600, "probe": 120, "command": 600 },
+  "consoleTailLines": 2000
+}
+```
+
+**CLI 解析顺序**（`probe: capability` 会把结果写进 `probe.json`，一眼可见）：
+`settings.arenaCli` → 环境变量 `AGENTARENA_CLI`(+`AGENTARENA_CLI_ARGS`) → PATH 上的 `agentarena` →
+`node packages/cli/dist/index.js`（仓库内已构建时）。四者都没有 → `benchmark` job 立刻 `failed`（`engine-error`），
+不会假装跑过。
+
+### 10.4 实现要点（原检查清单）
+
+
+
+1. `*.job.json` 才入队；`idempotencyKey` 命中终态直接复用（不重复烧 token），并把 job 原件归档出队。
+2. 租约先写后跑（`state/lease.json`，30 分钟 TTL + 60s 心跳）；租约有效 → 本轮只报"busy"并退出 0；过期自动接管。
+3. `requirements` 先验后跑；不满足 → fail-fast，**不降级**。硬件报告字段按 `vram_gb` / `cuda_driver`（git-sync 的 snake_case）归一化。
+4. 输出只往 `.work/` 与 `results/` 写；`--repo` / `--task` / `cwd` 都解析到仓库根内，逃逸即拒绝。
+5. 日志落 `.work/<jobId>/{stdout,stderr}.log`，再合成 `console.log`（头部含 jobId/命令/退出码/耗时，尾部截断）。
+6. `--json` 与 `--json-events` 二选一（互斥），两者最后一行都是可解析摘要；`summary.json` 优先于 stdout 摘要。
+7. `.ps1` 全 ASCII（PowerShell 5.1 GBK 解码坑，见 `skills/git-sync/SKILL.md` 铁律 1）；中文只进 `.md`/`.json`/`.mjs`。
+8. 跑完不论成败都写 `status.json` + `artifacts.json` + `console.log` + `ledger.jsonl`，再 archive job 原件。
+9. `--dry-run` **绝不改文件**（不写状态、不归档、不记台账）。
 
 ## 11. 已知限制（v1 明确不做）
 
@@ -520,12 +579,34 @@ if (Test-Path '.\code\local-runner.ps1') {
 | L6 | `kind=command` 默认关 | 有意为之：本机是主权方，逃生舱必须有意识打开 |
 | L7 | 无队列优先级抢占 | `priority` 只在同一轮排序生效；跑起来的 job 不被打断 |
 
+## 11.5 S2 验收记录（沙箱内真跑，2026-09-15）
+
+在临时"假仓库"里用假 CLI（`--output/--json/--json-events` 行为对齐真 CLI）跑完整 drain，覆盖：
+
+| 场景 | 期望 | 实测 |
+|---|---|---|
+| 正常 benchmark（2 agent 成功） | `succeeded` / `pass`，产物入 `results/`（sha256 齐全） | ✅ exit 0 |
+| 有 agent 失败（CLI exit 1） | `failed` / `fail` / `failureCategory=environment`，`failedJudges[]` 带 judgeId+note | ✅ exit 1 |
+| 超时（CLI 睡 60s，job 10s） | `timed_out` / `inconclusive`，**进程树被杀干净** | ✅ 10.0s，无残留进程 |
+| `requirements` 不满足（假工具 + 8GB 显存 + 不存在的 env） | `failed` / `environment` / `requirements-unmet`，**不执行** | ✅ 未启动 CLI |
+| 产物超 `maxFileMb` | 只进 manifest（`committed:false` + `localPath`），job 仍成功 | ✅ |
+| 同一 `idempotencyKey` 重放 | 复用已有结果、不重跑、原件归档出队 | ✅ |
+| `kind=command` 未开闸 | `skipped` / `policy-rejected` + 结构化原因 | ✅ |
+| job 文件坏 JSON | `skipped` / `unsupported-schema` | ✅ |
+| 有效租约在手 | 打印 busy、退出 0、队列不动 | ✅ |
+| `--force` 重跑 | `attempt+1`，`attempts[]` 保留历史 | ✅ |
+| `--dry-run` | 不改任何文件 | ✅ |
+| 执行器自检 | `node code/local-runner.mjs --self-test` | ✅ 16/16 |
+
+已知未覆盖：真机 Windows 上的 `taskkill` 分支、`where` 解析出的 `.cmd` shim 路径（沙箱是 Linux）——
+这两条正是首轮真机 probe 要顺带验证的东西。
+
 ## 12. 落地路线（协议之外，按需推进）
 
 | 阶段 | 交付物 | 归属 | 备注 |
 |---|---|---|---|
-| **S1（本阶段）** | 本文 + `docs/schemas/*.json` + `local-runs/` 骨架 + 示例 | 工作会话 1 | **不改** `packages/`、`apps/` |
-| S2 | `code/local-runner.ps1`（队列排空器，纯 ASCII）+ `code/local_check.ps1` 挂钩 + 校验器（Node，`scripts/`） | 工作会话 1 | 本机侧文件，仍不进 runner 核心 |
+| **S1 ✅（已推送）** | 本文 + `docs/schemas/*.json` + `local-runs/` 骨架 + 示例 | 工作会话 1 | **不改** `packages/`、`apps/` |
+| **S2 ✅（已推送）** | `code/local-runner.mjs`（执行器）+ `code/local-runner.ps1`（ASCII 包装）+ `scripts/local-runner-validate.mjs`（校验器）+ `code/local_check.ps1` 挂钩 + `local-runs/settings.example.json` | 工作会话 1 | 本机侧文件，仍不进 runner 核心 |
 | S3 | 沙箱侧小工具：`scripts/local-runner-job.mjs`（生成 job + 校验 + 收结果），供任何会话复用 | 工作会话 1 / 汇总会话 | 只读 `local-runs/**` |
 | S4 | 把真机 venue 接进 `runBenchmark` / UI（job 生成、结果并入报告） | **工作会话 2**（brief 是它的地盘）+ 汇总会话 | 需要改 `packages/`，由它们定 |
 | S5 | 版本与回归：把 job/status schema 纳入契约测试（`tests/`） | 汇总会话 | 合并到 main 后再谈 |

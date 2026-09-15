@@ -1,0 +1,31 @@
+{
+  "$comment": "Copy to local-runs/state/settings.json (that path is git-ignored: local policy stays on the machine). See docs/local-runner-protocol.md section 10.3.",
+  "maxJobsPerDrain": 1,
+  "maxParallelAgents": 2,
+  "allowedKinds": [
+    "benchmark",
+    "probe"
+  ],
+  "allowRiskyCommands": false,
+  "allowedProbes": [
+    "capability",
+    "hardware",
+    "doctor",
+    "nvidia-smi",
+    "conda-env-list",
+    "agentarena-version"
+  ],
+  "arenaCli": null,
+  "arenaCliArgs": [],
+  "artifactPolicy": {
+    "defaultMode": "summary",
+    "maxFileMb": 5,
+    "maxTotalMb": 20
+  },
+  "defaultTimeoutSeconds": {
+    "benchmark": 3600,
+    "probe": 120,
+    "command": 600
+  },
+  "consoleTailLines": 2000
+}

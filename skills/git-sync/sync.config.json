@@ -5,7 +5,8 @@
   "download_sets": {
     "final": [
       "results",
-      "docs"
+      "docs",
+      "local-runs/results"
     ],
     "reports": [
       "results"
@@ -35,7 +36,11 @@
       "apps",
       "scripts",
       "tests",
-      "examples"
+      "examples",
+      "local-runs"
+    ],
+    "runs": [
+      "local-runs"
     ]
   },
   "upload_map": {
@@ -59,5 +64,5 @@
   "hardware_dir": "results/hardware",
   "handshake": "results/status/handshake.json",
   "check_cmd": "powershell -NoProfile -ExecutionPolicy Bypass -File code/local_check.ps1",
-  "_note": "branch/remote 是与本仓库 Arena 会话约定的工作分支（一个会话一个分支）；download_sets 是 download.ps1 -Set 可用的集合，已按 AgentArena 实际目录调整（本仓库没有 deliverable/，所以 final = results + docs；node_modules/dist 等构建产物不在任何集合里）；upload_map 决定 upload.ps1 附件归位；gate 是 agent-sync.sh 提交前自检；receipt/receipt_history 是同步回执及其归档；hardware_dir 是本机硬件报告目录；handshake 是自动验证循环的状态文件；check_cmd 是本机值守（watch.ps1）在 agent 请求检查时运行的命令。配置查找顺序：-Config 参数 > sync.config.<GIT_SYNC_PROFILE>.json > 本文件。"
+  "_note": "branch/remote 是与本仓库 Arena 会话约定的工作分支（一个会话一个分支）；download_sets 是 download.ps1 -Set 可用的集合，已按 AgentArena 实际目录调整（本仓库没有 deliverable/，所以 final = results + docs + local-runs/results；node_modules/dist 等构建产物不在任何集合里）；upload_map 决定 upload.ps1 附件归位；gate 是 agent-sync.sh 提交前自检；receipt/receipt_history 是同步回执及其归档；hardware_dir 是本机硬件报告目录；handshake 是自动验证循环的状态文件；check_cmd 是本机值守（watch.ps1）在 agent 请求检查时运行的命令。配置查找顺序：-Config 参数 > sync.config.<GIT_SYNC_PROFILE>.json > 本文件。 local-runs 相关集合：runs=local-runs 全量（含 jobs/ 队列与 results/ 回传区），final 只含 local-runs/results（交付物与判定）；local-runs/state 与 local-runs/.work 被 local-runs/.gitignore 排除，不会下载。"
 }

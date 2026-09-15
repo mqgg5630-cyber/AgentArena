@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-09-15] 根 .gitignore 的 `*.log` 静默吞掉 local-runner 的回传日志（`check-ignore -v` 会误导你）
+
+- 现象/目标：local-runner 执行器把判定与日志写到 `local-runs/results/<jobId>/console.log`，但 `git add -A` 永远看不到它——产物在沙箱/本机都"存在"，只是回不到分支上。
+- 根因/思路：仓库根 `.gitignore` 有一条通用 `*.log`（日志段）。嵌套 `.gitignore` 的负例（`!console.log`）优先级高于上层规则，所以正确修法是在 `local-runs/.gitignore` 里写 `!console.log` / `!console.ndjson`。**排查时的坑**：`git check-ignore -v <file>` 对"被负例救回来"的文件会打印负例那行且 **exit 0**，看起来像"仍被忽略"，容易得出相反结论。
+- 解法：`local-runs/.gitignore` 加两条负例；判定用 `git check-ignore -q`（0=忽略、1=不忽略）或直接 `git add -A -n | grep <file>` 看它是否真的进暂存。
+- 教训/可复用点：[通用] 给"产物目录"设计 .gitignore 时，先假设上层有 `*.log`、`*.zip`、`build/` 之类宽规则；**验证一律用 `git add -A -n`**（真实结果），不要只信 `check-ignore -v` 的打印。
+
 ## [2026-09-15] local-runner 协议选型：结构化 job 队列 + `check_cmd` 挂钩，而不是把参数写进握手 note
 
 - 现象/目标：沙箱没有本机的 GPU / conda / CLI agent，真机执行必须"派活—执行—回传"。git-sync 的自动验证循环只有**单槽** `handshake.json`，note 是一句自然语言——塞不下 agents/options/requirements/回传策略，也做不到可审计、可重放、幂等重试。

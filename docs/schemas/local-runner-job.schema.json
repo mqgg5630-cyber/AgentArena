@@ -110,7 +110,7 @@
             "repeat": { "type": "integer", "minimum": 1 },
             "resume": { "type": "string", "description": "Run directory to resume from, inside local-runs/.work/<jobId>." },
             "locale": { "enum": ["en", "zh-CN"] },
-            "jsonEvents": { "type": "boolean", "default": true, "description": "Capture the NDJSON progress stream into console.ndjson (kept only on failure by default)." }
+            "jsonEvents": { "type": "boolean", "default": false, "description": "Use --json-events instead of --json (the two are mutually exclusive); the NDJSON stream is kept as console.ndjson and the last line is still a parseable summary." }
           }
         }
       }
@@ -120,7 +120,7 @@
       "required": ["probe"],
       "additionalProperties": false,
       "properties": {
-        "probe": { "enum": ["hardware", "doctor", "nvidia-smi", "conda-env-list", "agentarena-version"] }
+        "probe": { "enum": ["hardware", "doctor", "nvidia-smi", "conda-env-list", "agentarena-version", "capability"] }
       }
     },
     "commandSpec": {

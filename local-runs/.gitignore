@@ -4,6 +4,11 @@
 state/
 .work/
 
+# the verdict's human-readable log IS tracked - re-include it (the repo root
+# .gitignore has a blanket *.log rule that would otherwise swallow console.log)
+!console.log
+!console.ndjson
+
 # never commit large or temporary artifacts (they are recorded in artifacts.json instead)
 *.tmp
 *.zip
