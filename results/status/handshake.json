@@ -1,9 +1,9 @@
 {
-  "round": 1,
+  "round": 2,
   "arena_state": "awaiting_check",
   "local_state": "pending",
-  "arena_updated": "2026-09-15 07:55:35",
+  "arena_updated": "2026-09-15 08:30:34",
   "local_updated": null,
   "host": "",
-  "note": "S2: local-runner.ps1 + probe job (20260915-001-capability-probe)"
+  "note": "S2b: 探针 job 20260915-001-capability-probe（队列未消费就顺手看一眼 local-runner-drain.txt）"
 }
