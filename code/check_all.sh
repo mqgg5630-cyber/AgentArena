@@ -59,4 +59,18 @@ else
     fail=1
 fi
 
+# ------------------------------------------------ 4. docs <-> judge registry
+# Repo-local addition (NOT from the git-sync template): the judge-type catalog
+# in the docs drifted silently once (12 -> 15 with nobody noticing), because
+# tests/judge-registry-sync.test.mjs guards only the code side. See
+# code/check-doc-judge-sync.mjs. Skipped when node is unavailable.
+if command -v node >/dev/null 2>&1 && [ -f code/check-doc-judge-sync.mjs ]; then
+    if ! node code/check-doc-judge-sync.mjs; then
+        echo "[FAIL] judge-type catalog drifted from the registry (see the lines above)"
+        fail=1
+    fi
+elif [ -f code/check-doc-judge-sync.mjs ]; then
+    echo "WARN: node not found - skipped the judge-type doc/registry check"
+fi
+
 exit $fail
