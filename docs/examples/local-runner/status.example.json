@@ -1,0 +1,80 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "20260915-001-demo-smoke",
+  "state": "succeeded",
+  "attempt": 1,
+  "idempotencyKey": "demo-smoke-v1",
+  "kind": "benchmark",
+  "requestedBy": { "branch": "arena/01a0a3ee-agentarena", "session": "arena-01a0a3ee" },
+  "host": {
+    "name": "LAPTOP-R77M5D6M",
+    "os": "Microsoft Windows 11 专业版 (build 26200)",
+    "powershell": "5.1.26100.8875"
+  },
+  "timing": {
+    "queuedAt": "2026-09-15T07:40:00Z",
+    "startedAt": "2026-09-15T07:44:12Z",
+    "finishedAt": "2026-09-15T07:51:04Z",
+    "durationMs": 412345,
+    "timeoutSeconds": 900
+  },
+  "execution": {
+    "command": "agentarena run --repo . --task examples/taskpacks/demo-repo-health.json --agents demo-fast,demo-thorough --output local-runs/.work/20260915-001-demo-smoke --score-mode balanced --max-concurrency 1 --locale zh-CN --json --json-events",
+    "cwd": "E:\\0github\\git-sync\\AgentArena-01a0a3ee",
+    "exitCode": 0,
+    "runId": "2026-09-15T07-44-12-118Z-9f3c1a7b",
+    "stdoutLastLine": "{\"runId\":\"2026-09-15T07-44-12-118Z-9f3c1a7b\",\"totals\":{\"agentCount\":2,\"successCount\":2,...}}"
+  },
+  "requirements": {
+    "declared": { "tools": ["node", "git"], "minFreeDiskGb": 5 },
+    "actual": {
+      "tools": { "node": "v22.14.0", "git": "2.54.0.windows.1" },
+      "freeDiskGb": 181.2,
+      "gpu": [{ "name": "NVIDIA GeForce GTX 1650", "vramGb": 4, "driver": "576.02", "cudaDriver": "12.9" }],
+      "hardwareGenerated": "2026-09-15 12:47:25"
+    },
+    "satisfied": true,
+    "unmet": []
+  },
+  "envActual": {
+    "gpu": [{ "name": "NVIDIA GeForce GTX 1650", "vramGb": 4, "driver": "576.02", "cudaDriver": "12.9" }],
+    "conda": { "conda": "conda 25.3.1", "mamba": "2.0.5", "activeEnv": "base" },
+    "hardwareReport": "results/hardware/latest.json",
+    "hardwareGenerated": "2026-09-15 12:47:25",
+    "git": { "branch": "arena/01a0a3ee-agentarena", "commit": "f4da429" }
+  },
+  "artifacts": [
+    { "path": "summary.json", "role": "summary", "bytes": 41233, "sha256": "3f1c…", "committed": true },
+    { "path": "report.html", "role": "report", "bytes": 918234, "sha256": "a7b2…", "committed": true },
+    { "path": "decision-report.md", "role": "decision", "bytes": 8421, "sha256": "c91e…", "committed": true },
+    { "path": "results.csv", "role": "csv", "bytes": 1204, "sha256": "77d0…", "committed": true },
+    { "path": "console.log", "role": "log", "bytes": 51200, "sha256": "b310…", "committed": true },
+    {
+      "path": "agents/demo-fast/trace.jsonl",
+      "role": "trace",
+      "bytes": 81234567,
+      "sha256": "e5aa…",
+      "committed": false,
+      "localPath": "E:\\0github\\git-sync\\AgentArena-01a0a3ee\\local-runs\\.work\\20260915-001-demo-smoke\\agents\\demo-fast\\trace.jsonl",
+      "reason": "exceeds maxFileMb (5)"
+    }
+  ],
+  "verdict": {
+    "outcome": "pass",
+    "failureCategory": null,
+    "totals": { "agentCount": 2, "successCount": 2, "tokens": 18432, "costUsd": 0.14 },
+    "scores": [
+      { "variantId": "demo-fast", "status": "success", "compositeScore": 0.83, "judges": { "passed": 5, "total": 5 }, "durationMs": 120000 },
+      { "variantId": "demo-thorough", "status": "success", "compositeScore": 0.91, "judges": { "passed": 5, "total": 5 }, "durationMs": 292345 }
+    ],
+    "failedJudges": [],
+    "notes": ["硬件报告距今 0 天"]
+  },
+  "error": null,
+  "logTail": ["[agentarena] preflight: demo-fast ready, demo-thorough ready", "[agentarena] run complete: 2/2 success"],
+  "links": {
+    "report": "local-runs/results/20260915-001-demo-smoke/report.html",
+    "runSummary": "local-runs/results/20260915-001-demo-smoke/summary.json",
+    "workdir": "local-runs/.work/20260915-001-demo-smoke"
+  }
+}

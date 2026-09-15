@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "20260915-002-cuda-torch-probe",
+  "createdAt": "2026-09-15T07:41:00Z",
+  "kind": "probe",
+  "requestedBy": { "branch": "arena/01a0a3ee-agentarena", "session": "arena-01a0a3ee" },
+  "reason": "长任务开跑前先确认本机是否有带 CUDA 的 torch 环境（现有报告显示 NTxPred2 是 cpu 版）",
+  "spec": { "probe": "hardware" },
+  "timeoutSeconds": 120,
+  "priority": 1,
+  "idempotencyKey": "hw-probe-20260915",
+  "artifacts": { "mode": "manifest-only" },
+  "notes": "若本机没有 CUDA torch，后续依赖 GPU 的 benchmark 会在 requirements 预检阶段 fail-fast（不降级到 CPU）。"
+}

@@ -1,0 +1,18 @@
+# local-runs: only the queue, the verdicts and the ledger are tracked.
+# Runtime state and the raw execution site stay on the user's machine.
+
+state/
+.work/
+
+# never commit large or temporary artifacts (they are recorded in artifacts.json instead)
+*.tmp
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.log.gz
+*.ndjson.gz
+
+# keep the directories themselves
+!jobs/.gitkeep
+!results/.gitkeep
