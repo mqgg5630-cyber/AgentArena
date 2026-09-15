@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-09-15] 值守链路与助手链路不在同一个操作系统里：watcher 跑在 WSL2，`.ps1` 工具面在 Windows
+
+- 现象/目标：探针 job 在真机跑通后，回传的环境事实自相矛盾——`nvidia-smi` 可用、`git`/`node` 来自 `/usr/bin`、仓库路径是 `/mnt/e/...`，但 conda 在 PATH 上找不到（本机 conda 在 Windows 侧 `E:\spider`），node 是 v20 而 Windows 侧根本没探测到 node。
+- 根因/思路：`check_cmd` 换成 `bash code/local_check.sh` 之后，计划任务里的 `bash` 解析到 **WSL2 的 bash**，整条检查链其实运行在 Linux 子系统里（`os.type()=Linux`、`node=/usr/bin/node`、`nvidia-smi=/usr/lib/wsl/lib/nvidia-smi`）；而 `hardware.ps1` / `drain-and-push.ps1` 这些助手是 Windows PowerShell 侧的工具。两边 PATH、node 版本、conda 可见性完全不同。
+- 解法：执行器改为**事实探测而非假设**（GPU 走 `nvidia-smi`、conda 缺失时回落到 `results/hardware/latest.json` 的 22 个环境清单），并在报告里明确记录"哪个进程在哪个 OS 上跑"；后续 S3 的 CLI 必须在 **WSL 侧**可用（`node packages/cli/dist/index.js`）。
+- 教训/可复用点：[通用] 跨平台机器上做自动化时，先确认**执行者所在的 OS/解释器**（一条 `probe` 打印 `os.type()`/可执行文件路径就够），别用宿主机的事实推断子系统的能力；"同一个仓库"在不同 shell 里可能是两个世界。
+
 ## [2026-09-15] 改了 check_cmd 却要"下一轮"才生效：watch.ps1 只在有请求时 sync，且配置在 poll 开头读取
 
 - 现象/目标：`check_cmd` 从 powershell 链换成 `bash code/local_check.sh` 并推送后，本机 round 3 的检查日志仍打印 `cmd: powershell ... -File code/local_check.ps1`，新一轮依旧"空转通过"（无输出、无副作用）。

@@ -7,7 +7,7 @@
 - 角色：**工作会话 1** —— 负责【local-runner 执行协议 + 执行器】
 - 工作分支：`arena/01a0a3ee-agentarena`（只在本分支读写；不合并他人分支、不动 runner 核心代码）
 - 技能版本：**git-sync v2.4.7**（2.4.6 = 撤回 wscript+vbs 隐形启动器；2.4.7 = 检查日志加 elapsed + 空输出显式标注）
-- 最近更新：2026-09-15（S2 本机检查通过；探针 job 仍在队列，见 §三点五）
+- 最近更新：2026-09-15（**round 4 达标：原生链生效，探针 job 已在真机执行并回传**；S3 待 CLI 在 WSL 侧可用）
 
 ## 〇、合并提醒（**给 3d6 与汇总会话**）
 
@@ -71,6 +71,7 @@
 | 1 | passed | `powershell ... code/local_check.ps1` | 无 | 假通过（空转） |
 | 2 | passed | 同上 | 无 | 假通过（空转） |
 | 3 | passed | 同上 | 无 | **假通过，根因已定位**：该轮读取的是 round 2 时（16:31）拉下的旧配置；16:42 推的原生链要下一轮才生效 |
+| 4 | passed | （原生链）| **有** | ✅ **达标**：`drain-last.json` 刷新为真机（host LAPTOP-R77M5D6M / ran:true / probe succeeded/pass），job 归档到 `jobs/archive/`，结果四件套回传 |
 
 本机 round 1 判定：`local_state=passed`（exit 0）→ 挂钩没有失败，**但队列里的 probe job 仍未被消费**（远端无 `local-runs/results/20260915-001-capability-probe/`）。
 
@@ -82,9 +83,49 @@
 4. 自带证据（`local-runner-drain.txt` / `drain-last.json`）正是为了一次性区分这两种情况 —— 见 `docs/local-runner-protocol.md` §10.3.1；
 5. **round 3 定论**：日志回显 `cmd: powershell ...` 证明本机读到的仍是旧 `check_cmd`——`watch.ps1` 的固有滞后（poll 开头读配置 + 空闲轮不 pull）。处理 round 3 的那次 poll 已把 worktree 更新到新配置，**round 4 即验证原生链**。
 
+
+### 探针回传的环境事实（真机，2026-09-15 17:11 本地时间）
+
+| 项 | 事实 | 对 S3 的影响 |
+|---|---|---|
+| **执行者 OS** | **WSL2**（`Linux 6.18.33.2-microsoft-standard-WSL2`），仓库 `/mnt/e/0github/git-sync/agentarena-w1` | 检查链跑在 Linux 子系统里；`.ps1` 助手在 Windows 侧 —— 两边工具面不同 |
+| node | **v20.20.2**（`/usr/bin/node`）；仓库要求 ≥22 | 可能需在 WSL 升级 node，或先试 v20 能否 build |
+| **agentarena CLI** | **不可解析**（PATH 无、无 dist） | ⛔ **S3 的唯一硬阻塞**：benchmark job 现在会立刻 `engine-error` |
+| GPU | GTX 1650 4GB，driver 576.02，CUDA 驱动 12.9（WSL 下 `nvidia-smi` 可用） | GPU 任务可行但显存小 |
+| conda | **WSL 侧无 conda**（Windows 侧 `E:\spider`，22 环境） | 环境型任务要么 WSL 建环境，要么显式调 Windows python |
+| torch/CUDA | 全部环境无 CUDA torch（`NTxPred2` = 2.13.0+cpu） | 依赖 CUDA 的 job 会按设计 fail-fast（不降级） |
+| 磁盘/内存 | `/` 887 GB 空闲；`/mnt/e` 180.8 GB；RAM 15.5 GB（14.8 空闲） | 充裕 |
+
+### S3 计划（按你的要求：先给方案，再发 job）
+
+**A. 先跑 CPU 兼容的 demo benchmark（推荐立刻做，不需要 torch）** —— 只差让 CLI 在 WSL 可用：
+
+```bash
+# 在 WSL 里（不是 PowerShell）
+cd /mnt/e/0github/git-sync/agentarena-w1
+node -v                        # v20.20.2；仓库 engines 要求 >=22
+nvm install 22 && nvm use 22   # 若 v20 构建失败再装（或 apt/snap 装 nodejs 22）
+pnpm install && pnpm build
+node packages/cli/dist/index.js --version    # 打印 0.1.0 即可
+```
+> 构建出 `packages/cli/dist/index.js` 后，执行器会**自动**把它选为 CLI（候选顺序：`settings.arenaCli` → PATH `agentarena` → `node <repo>/packages/cli/dist/index.js`），无需改配置。
+> 然后我发 job：`demo` 任务包 + `demo-fast/demo-thorough`（不依赖 torch/GPU/外部 CLI），`requirements: {tools:[node,git]}`。
+
+**B. 需要 GPU/真实模型时的 CUDA torch 方案（以后再上）**：
+
+```bash
+# 方案 B1：WSL 内建环境（与执行器同 OS，最省事）
+conda create -n arena-gpu python=3.11 -y     # 需先在 WSL 装 miniconda
+conda run -n arena-gpu pip install torch --index-url https://download.pytorch.org/whl/cu124
+conda run -n arena-gpu python -c "import torch;print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+```
+- 4 GB 显存：只适合小模型/小 batch；job 里要用 `requirements.gpu.minVramGb` 明确上限，避免 OOM 后才失败。
+- `cu124` 与驱动 576.02 兼容（驱动支持的 CUDA 运行时上限 12.9）。
+- 方案 B2（不推荐）：在 WSL 里调 Windows 侧 `E:\spider\python.exe` —— 路径/环境割裂，只在你明确要求时再做。
+
 ## 四、下一步
 
-1. **round 4（我发，无需你操作）**：验证原生链是否消费 probe job —— 通过标准仍是「drain 证据 + job 被消费」。
+1. **你只在 WSL 跑一段（约 5 分钟）**：上面 A 段命令（`pnpm install && pnpm build` + `--version` 自证）。跑完告我一声，我立刻发 S3 的 demo benchmark job。
 2. **若 round 4 仍不成**：本机执行三连（兜底 + 取证）：
    ```powershell
    .\sync.ps1
