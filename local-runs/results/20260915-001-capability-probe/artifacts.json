@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "20260915-001-capability-probe",
+  "mode": "manifest-only",
+  "policy": {
+    "maxFileMb": 5,
+    "maxTotalMb": 20,
+    "hardMaxFileMb": 25,
+    "hardMaxTotalMb": 100
+  },
+  "artifacts": [
+    {
+      "path": "console.log",
+      "role": "log",
+      "bytes": 301,
+      "sha256": "4d8c7354c4742f8c517554470405f9202e4f066b7a3c5a5fc8ec1170d7d9be04",
+      "committed": true
+    },
+    {
+      "path": "probe.json",
+      "role": "other",
+      "bytes": 4111,
+      "sha256": "635a746482cb4d5ed2e2e9f0d84d14f7433896890f2ab31d5fc467a7f0ee30de",
+      "committed": true
+    }
+  ],
+  "skipped": []
+}

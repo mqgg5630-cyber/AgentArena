@@ -1,0 +1,187 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "20260915-001-capability-probe",
+  "state": "succeeded",
+  "attempt": 1,
+  "idempotencyKey": "capability-20260915",
+  "kind": "probe",
+  "requestedBy": {
+    "branch": "arena/01a0a3ee-agentarena",
+    "session": "arena-01a0a3ee"
+  },
+  "host": {
+    "name": "LAPTOP-R77M5D6M",
+    "os": "Linux 6.18.33.2-microsoft-standard-WSL2",
+    "node": "v20.20.2",
+    "pid": 700
+  },
+  "timing": {
+    "queuedAt": "2026-09-15T08:20:00Z",
+    "startedAt": "2026-09-15T09:11:23.559Z",
+    "finishedAt": "2026-09-15T09:11:24.439Z",
+    "durationMs": 830,
+    "timeoutSeconds": 120
+  },
+  "requirements": {
+    "satisfied": true,
+    "unmet": [],
+    "actual": {
+      "tools": {},
+      "gpu": [
+        {
+          "name": "NVIDIA GeForce GTX 1650",
+          "vramGb": 4,
+          "driver": "576.02",
+          "cudaDriver": "12.9"
+        }
+      ],
+      "condaEnv": null,
+      "condaEnvs": [
+        "D:\\Pymol",
+        "base",
+        "E:\\spider\\Library\\envs\\NTxPred2",
+        "E:\\spider\\Library\\envs\\cnki-review",
+        "E:\\spider\\Library\\envs\\lark",
+        "E:\\spider\\Library\\envs\\lmab",
+        "E:\\spider\\Library\\envs\\orange3",
+        "1",
+        "DIP",
+        "HeroMDanalysis",
+        "MMPBSA",
+        "blast",
+        "docking",
+        "gmx_copilot",
+        "gmx_mmpbsa",
+        "lark-f",
+        "mcp_pymol",
+        "meta-analysis",
+        "ncbi_datasets",
+        "spyder-runtime",
+        "e:\\kubernetes-master\\.conda",
+        "e:\\vit-pytorch-main\\.conda"
+      ],
+      "disk": [
+        {
+          "path": "/",
+          "totalGb": 1006.9,
+          "freeGb": 887.4
+        },
+        {
+          "path": "/mnt/e/0github/git-sync/agentarena-w1",
+          "totalGb": 715.4,
+          "freeGb": 180.8
+        }
+      ],
+      "ram": {
+        "totalGb": 15.5,
+        "freeGb": 14.8
+      },
+      "hardwareGenerated": "2026-09-15 15:46:15",
+      "hardwareReport": "results/hardware/latest.json"
+    },
+    "declared": {}
+  },
+  "envActual": {
+    "gpu": [
+      {
+        "name": "NVIDIA GeForce GTX 1650",
+        "vramGb": 4,
+        "driver": "576.02",
+        "cudaDriver": "12.9"
+      }
+    ],
+    "conda": {
+      "available": false,
+      "activeEnv": "D:\\Pymol"
+    },
+    "node": "v20.20.2",
+    "ram": {
+      "totalGb": 15.5,
+      "freeGb": 14.8
+    },
+    "disk": [
+      {
+        "path": "/",
+        "totalGb": 1006.9,
+        "freeGb": 887.4
+      },
+      {
+        "path": "/mnt/e/0github/git-sync/agentarena-w1",
+        "totalGb": 715.4,
+        "freeGb": 180.8
+      }
+    ],
+    "hardwareReport": "results/hardware/latest.json",
+    "hardwareGenerated": "2026-09-15 15:46:15",
+    "git": {
+      "branch": "arena/01a0a3ee-agentarena",
+      "commit": "b520f8a1c210ed91b96766de32ff1a80d001d675"
+    }
+  },
+  "execution": {
+    "command": "(probe:capability)",
+    "cwd": "/mnt/e/0github/git-sync/agentarena-w1",
+    "exitCode": 0,
+    "runId": null,
+    "timedOut": false,
+    "stdoutLastLine": null
+  },
+  "artifacts": [
+    {
+      "path": "console.log",
+      "role": "log",
+      "bytes": 301,
+      "sha256": "4d8c7354c4742f8c517554470405f9202e4f066b7a3c5a5fc8ec1170d7d9be04",
+      "committed": true
+    },
+    {
+      "path": "probe.json",
+      "role": "other",
+      "bytes": 4111,
+      "sha256": "635a746482cb4d5ed2e2e9f0d84d14f7433896890f2ab31d5fc467a7f0ee30de",
+      "committed": true
+    }
+  ],
+  "verdict": {
+    "outcome": "pass",
+    "failureCategory": null,
+    "totals": {},
+    "scores": [],
+    "failedJudges": [],
+    "notes": [
+      "agentarena CLI not resolvable - benchmark jobs will fail until it is installed or built"
+    ]
+  },
+  "error": null,
+  "logTail": [
+    "== local-runner console ==",
+    "jobId      : 20260915-001-capability-probe",
+    "kind       : probe",
+    "host       : LAPTOP-R77M5D6M",
+    "command    : (probe:capability)",
+    "cwd        : /mnt/e/0github/git-sync/agentarena-w1",
+    "exitCode   : 0",
+    "durationMs : 830",
+    "",
+    "== stdout (last 0 of 0 lines) ==",
+    "",
+    "== stderr (last 0 of 0 lines) ==",
+    ""
+  ],
+  "attempts": [
+    {
+      "attempt": 1,
+      "state": "succeeded",
+      "startedAt": "2026-09-15T09:11:23.559Z",
+      "finishedAt": "2026-09-15T09:11:24.439Z",
+      "exitCode": 0,
+      "error": null
+    }
+  ],
+  "links": {
+    "report": null,
+    "runSummary": null,
+    "workdir": "local-runs/.work/20260915-001-capability-probe",
+    "console": "local-runs/results/20260915-001-capability-probe/console.log"
+  }
+}

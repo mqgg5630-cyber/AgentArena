@@ -1,0 +1,4 @@
+{"ts":"2026-09-15T09:11:23.494Z","jobId":"20260915-001-capability-probe","event":"queued","by":"arena-01a0a3ee"}
+{"ts":"2026-09-15T09:11:23.555Z","jobId":"20260915-001-capability-probe","event":"leased","host":"LAPTOP-R77M5D6M","attempt":1}
+{"ts":"2026-09-15T09:11:23.582Z","jobId":"20260915-001-capability-probe","event":"started","host":"LAPTOP-R77M5D6M","attempt":1}
+{"ts":"2026-09-15T09:11:24.455Z","jobId":"20260915-001-capability-probe","event":"finished","state":"succeeded","outcome":"pass","durationMs":830}

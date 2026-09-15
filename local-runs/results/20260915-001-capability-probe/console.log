@@ -1,0 +1,12 @@
+== local-runner console ==
+jobId      : 20260915-001-capability-probe
+kind       : probe
+host       : LAPTOP-R77M5D6M
+command    : (probe:capability)
+cwd        : /mnt/e/0github/git-sync/agentarena-w1
+exitCode   : 0
+durationMs : 830
+
+== stdout (last 0 of 0 lines) ==
+
+== stderr (last 0 of 0 lines) ==

@@ -1,0 +1,9 @@
+check round 4 on LAPTOP-R77M5D6M - passed (exit 0)
+cmd: bash code/local_check.sh
+
+[local-runner] 1 job(s) ready, running 1
+[local-runner] 20260915-001-capability-probe: succeeded (outcome=pass) in 0.8s -> local-runs/results/20260915-001-capability-probe/status.json
+OK: all .ps1 files are ASCII-only
+OK: sync.config.json branch=arena/01a0a3ee-agentarena
+OK: root scripts identical to skills/git-sync/scripts
+== local checks passed (local-runner + gate)

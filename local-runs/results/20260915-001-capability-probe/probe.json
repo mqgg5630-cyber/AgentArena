@@ -1,0 +1,189 @@
+{
+  "schemaVersion": "1.0",
+  "probe": "capability",
+  "generatedAt": "2026-09-15T09:11:24.389Z",
+  "host": {
+    "name": "LAPTOP-R77M5D6M",
+    "os": "Linux 6.18.33.2-microsoft-standard-WSL2",
+    "platform": "linux",
+    "pid": 700
+  },
+  "node": {
+    "version": "v20.20.2",
+    "execPath": "/usr/bin/node"
+  },
+  "git": {
+    "branch": "arena/01a0a3ee-agentarena",
+    "commit": "b520f8a1c210ed91b96766de32ff1a80d001d675"
+  },
+  "tools": {
+    "git": "/usr/bin/git",
+    "node": "/usr/bin/node",
+    "pnpm": "/mnt/e/npm/pnpm",
+    "npm": "/usr/bin/npm",
+    "agentarena": null,
+    "nvidiaSmi": "/usr/lib/wsl/lib/nvidia-smi",
+    "conda": null
+  },
+  "cli": {
+    "selected": null,
+    "candidates": [
+      {
+        "command": "agentarena",
+        "source": "PATH",
+        "available": false,
+        "resolvedPath": null
+      }
+    ]
+  },
+  "gpu": [
+    {
+      "name": "NVIDIA GeForce GTX 1650",
+      "vramGb": 4,
+      "driver": "576.02",
+      "cudaDriver": "12.9"
+    }
+  ],
+  "nvidiaSmi": {
+    "available": true,
+    "error": null
+  },
+  "conda": {
+    "available": false,
+    "envs": [
+      {
+        "name": "D:\\Pymol",
+        "path": "D:\\Pymol"
+      },
+      {
+        "name": "base",
+        "path": "E:\\spider"
+      },
+      {
+        "name": "E:\\spider\\Library\\envs\\NTxPred2",
+        "path": "E:\\spider\\Library\\envs\\NTxPred2"
+      },
+      {
+        "name": "E:\\spider\\Library\\envs\\cnki-review",
+        "path": "E:\\spider\\Library\\envs\\cnki-review"
+      },
+      {
+        "name": "E:\\spider\\Library\\envs\\lark",
+        "path": "E:\\spider\\Library\\envs\\lark"
+      },
+      {
+        "name": "E:\\spider\\Library\\envs\\lmab",
+        "path": "E:\\spider\\Library\\envs\\lmab"
+      },
+      {
+        "name": "E:\\spider\\Library\\envs\\orange3",
+        "path": "E:\\spider\\Library\\envs\\orange3"
+      },
+      {
+        "name": "1",
+        "path": "E:\\spider\\envs\\1"
+      },
+      {
+        "name": "DIP",
+        "path": "E:\\spider\\envs\\DIP"
+      },
+      {
+        "name": "HeroMDanalysis",
+        "path": "E:\\spider\\envs\\HeroMDanalysis"
+      },
+      {
+        "name": "MMPBSA",
+        "path": "E:\\spider\\envs\\MMPBSA"
+      },
+      {
+        "name": "blast",
+        "path": "E:\\spider\\envs\\blast"
+      },
+      {
+        "name": "docking",
+        "path": "E:\\spider\\envs\\docking"
+      },
+      {
+        "name": "gmx_copilot",
+        "path": "E:\\spider\\envs\\gmx_copilot"
+      },
+      {
+        "name": "gmx_mmpbsa",
+        "path": "E:\\spider\\envs\\gmx_mmpbsa"
+      },
+      {
+        "name": "lark-f",
+        "path": "E:\\spider\\envs\\lark-f"
+      },
+      {
+        "name": "mcp_pymol",
+        "path": "E:\\spider\\envs\\mcp_pymol"
+      },
+      {
+        "name": "meta-analysis",
+        "path": "E:\\spider\\envs\\meta-analysis"
+      },
+      {
+        "name": "ncbi_datasets",
+        "path": "E:\\spider\\envs\\ncbi_datasets"
+      },
+      {
+        "name": "spyder-runtime",
+        "path": "E:\\spider\\envs\\spyder-runtime"
+      },
+      {
+        "name": "e:\\kubernetes-master\\.conda",
+        "path": "e:\\kubernetes-master\\.conda"
+      },
+      {
+        "name": "e:\\vit-pytorch-main\\.conda",
+        "path": "e:\\vit-pytorch-main\\.conda"
+      }
+    ],
+    "envCount": 22
+  },
+  "ram": {
+    "totalGb": 15.5,
+    "freeGb": 14.8
+  },
+  "disk": [
+    {
+      "path": "/",
+      "totalGb": 1006.9,
+      "freeGb": 887.4
+    },
+    {
+      "path": "/mnt/e/0github/git-sync/agentarena-w1",
+      "totalGb": 715.4,
+      "freeGb": 180.8
+    }
+  ],
+  "hardware": {
+    "report": "results/hardware/latest.json",
+    "generated": "2026-09-15 15:46:15",
+    "host": "LAPTOP-R77M5D6M",
+    "gpuCount": 1
+  },
+  "checks": [
+    {
+      "name": "agentarena-cli",
+      "ok": false,
+      "detail": "not found"
+    },
+    {
+      "name": "nvidia-smi",
+      "ok": true,
+      "detail": "1 GPU(s)"
+    },
+    {
+      "name": "conda",
+      "ok": false,
+      "detail": "22 env(s)"
+    },
+    {
+      "name": "hardware-report",
+      "ok": true,
+      "detail": "2026-09-15 15:46:15"
+    }
+  ]
+}
