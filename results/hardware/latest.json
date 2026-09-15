@@ -1,0 +1,282 @@
+{
+    "generated":  "2026-09-15 12:47:25",
+    "host":  "LAPTOP-R77M5D6M",
+    "user":  "文少",
+    "powershell":  "5.1.26100.8875",
+    "os":  {
+               "caption":  "Microsoft Windows 11 专业版",
+               "version":  "10.0.26200",
+               "build":  "26200",
+               "last_boot":  "09/15/2026 08:42:34"
+           },
+    "cpu":  {
+                "name":  "Intel(R) Core(TM) i5-10200H CPU @ 2.40GHz",
+                "cores":  4,
+                "threads":  8,
+                "mhz":  2400
+            },
+    "ram":  {
+                "total_gb":  15.9,
+                "free_gb":  5.7
+            },
+    "gpus":  [
+                 {
+                     "name":  "NVIDIA GeForce GTX 1650",
+                     "driver":  "576.02",
+                     "vram_gb":  4,
+                     "compute_cap":  "7.5",
+                     "cuda_driver":  "12.9"
+                 }
+             ],
+    "disks":  [
+                  {
+                      "drive":  "C:",
+                      "total_gb":  100,
+                      "free_gb":  49.1
+                  },
+                  {
+                      "drive":  "D:",
+                      "total_gb":  137.2,
+                      "free_gb":  29.7
+                  },
+                  {
+                      "drive":  "E:",
+                      "total_gb":  715.4,
+                      "free_gb":  181.2
+                  }
+              ],
+    "python":  {
+                   "global_python":  "Python 3.11.9  (E:\\spider\\python.exe)",
+                   "current_env":  "base",
+                   "cuda_home":  "",
+                   "conda":  "conda 25.3.1",
+                   "mamba":  "2.0.5",
+                   "micromamba":  "(not found)",
+                   "envs":  [
+                                {
+                                    "name":  "D:\\Pymol",
+                                    "path":  "D:\\Pymol",
+                                    "active":  false,
+                                    "python":  "Python 3.10.15",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "base",
+                                    "path":  "E:\\spider",
+                                    "active":  true,
+                                    "python":  "Python 3.11.9",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "E:\\spider\\Library\\envs\\NTxPred2",
+                                    "path":  "E:\\spider\\Library\\envs\\NTxPred2",
+                                    "active":  false,
+                                    "python":  "Python 3.10.7",
+                                    "torch":  "2.13.0+cpu",
+                                    "cuda_available":  false,
+                                    "torch_cuda":  "None",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "E:\\spider\\Library\\envs\\cnki-review",
+                                    "path":  "E:\\spider\\Library\\envs\\cnki-review",
+                                    "active":  false,
+                                    "python":  "Python 3.11.15",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "E:\\spider\\Library\\envs\\lark",
+                                    "path":  "E:\\spider\\Library\\envs\\lark",
+                                    "active":  false,
+                                    "python":  "Python 3.11.15",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "E:\\spider\\Library\\envs\\lmab",
+                                    "path":  "E:\\spider\\Library\\envs\\lmab",
+                                    "active":  false,
+                                    "python":  "Python 3.12.13",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "E:\\spider\\Library\\envs\\orange3",
+                                    "path":  "E:\\spider\\Library\\envs\\orange3",
+                                    "active":  false,
+                                    "python":  "Python 3.12.13",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "1",
+                                    "path":  "E:\\spider\\envs\\1",
+                                    "active":  false,
+                                    "python":  "",
+                                    "torch":  "",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "DIP",
+                                    "path":  "E:\\spider\\envs\\DIP",
+                                    "active":  false,
+                                    "python":  "Python 3.9.21",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "HeroMDanalysis",
+                                    "path":  "E:\\spider\\envs\\HeroMDanalysis",
+                                    "active":  false,
+                                    "python":  "",
+                                    "torch":  "",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "MMPBSA",
+                                    "path":  "E:\\spider\\envs\\MMPBSA",
+                                    "active":  false,
+                                    "python":  "Python 3.10.17",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "blast",
+                                    "path":  "E:\\spider\\envs\\blast",
+                                    "active":  false,
+                                    "python":  "",
+                                    "torch":  "",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "docking",
+                                    "path":  "E:\\spider\\envs\\docking",
+                                    "active":  false,
+                                    "python":  "Python 3.9.23",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "gmx_copilot",
+                                    "path":  "E:\\spider\\envs\\gmx_copilot",
+                                    "active":  false,
+                                    "python":  "Python 3.10.17",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "gmx_mmpbsa",
+                                    "path":  "E:\\spider\\envs\\gmx_mmpbsa",
+                                    "active":  false,
+                                    "python":  "Python 3.9.22",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "lark-f",
+                                    "path":  "E:\\spider\\envs\\lark-f",
+                                    "active":  false,
+                                    "python":  "Python 3.12.13",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "mcp_pymol",
+                                    "path":  "E:\\spider\\envs\\mcp_pymol",
+                                    "active":  false,
+                                    "python":  "Python 3.11.15",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "meta-analysis",
+                                    "path":  "E:\\spider\\envs\\meta-analysis",
+                                    "active":  false,
+                                    "python":  "Python 3.11.15",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "ncbi_datasets",
+                                    "path":  "E:\\spider\\envs\\ncbi_datasets",
+                                    "active":  false,
+                                    "python":  "",
+                                    "torch":  "",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "spyder-runtime",
+                                    "path":  "E:\\spider\\envs\\spyder-runtime",
+                                    "active":  false,
+                                    "python":  "Python 3.11.11",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "e:\\kubernetes-master\\.conda",
+                                    "path":  "e:\\kubernetes-master\\.conda",
+                                    "active":  false,
+                                    "python":  "Python 3.12.9",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                },
+                                {
+                                    "name":  "e:\\vit-pytorch-main\\.conda",
+                                    "path":  "e:\\vit-pytorch-main\\.conda",
+                                    "active":  false,
+                                    "python":  "Python 3.11.11",
+                                    "torch":  "(not installed)",
+                                    "cuda_available":  null,
+                                    "torch_cuda":  "",
+                                    "gpu":  ""
+                                }
+                            ]
+               },
+    "tools":  {
+                  "git":  "git version 2.54.0.windows.1",
+                  "nvidia_smi":  true
+              }
+}
