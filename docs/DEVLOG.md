@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-09-15] 值守无声停摆：wscript+VBS 隐形启动器"成功但什么都没跑"
+
+- 现象/目标：为消除值守每 2 分钟一次的弹窗，v2.4.4 把计划任务改成 `wscript.exe` 调 `%USERPROFILE%\.git-sync\invisible.vbs`；之后 round 2 的真机检查请求挂了 10 分钟无人处理，而 `Get-ScheduledTaskInfo` 显示任务正常执行（LastTaskResult=0）。
+- 根因/思路：包装层依赖 VBScript 宿主，Windows 11 正在退役 VBScript → 计划任务被判"执行成功"，实际脚本被拒、轮询根本没发生。**最坏的一类故障：成功码掩盖了零工作量**，从任务状态、退出码都看不出来，只有"握手时间戳不更新"能暴露。
+- 解法：技能 v2.4.6 回退到久经检验的 `powershell -WindowStyle Hidden`（代价是每次轮询短暂闪窗），零窗口另给实验性 `-Headless`（S4U 登录 → session 0，不走脚本宿主）；本仓库升级到 v2.4.6 并重注册值守。
+- 教训/可复用点：[通用] 消除窗口要用系统原生机制（S4U/session 0），不要用脚本宿主包装层取巧——它会连可观测性一起消掉；任何"隐形/后台"改动上线后必须验证"它真的干活了"（看业务心跳/时间戳），不能只看任务状态与退出码。
+
 ## [2026-09-15] 枚举型文档加守卫：judge 类型目录必须与 registry 对齐
 
 - 现象/目标：`.skills` 的 judge 类型清单从 12 漂到 15 无人发现（上一轮修的）；代码侧有 `tests/judge-registry-sync.test.mjs` 守着 registry↔normalizers↔union，**文档侧完全没有守卫**，同类漂移还会再发生。

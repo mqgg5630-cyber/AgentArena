@@ -17,9 +17,9 @@
 #     .\watch.ps1 -Unregister            # remove the scheduled task
 #
 # The task runs as the current user "only when logged on" and reuses the git
-# credentials Windows already has (the ones push.ps1 uses). Since v2.4.4 the
-# task launches through %USERPROFILE%\.git-sync\invisible.vbs (wscript), so
-# the polls run with NO console window flash at all.
+# credentials Windows already has (the ones push.ps1 uses). Each poll briefly
+# flashes a console window; -Headless registers the task with an S4U logon
+# (session 0, zero window) instead - experimental, revert if pushes stop.
 #
 # ASCII-only on purpose (Windows PowerShell 5.1 decodes .ps1 as ANSI/GBK).
 
@@ -29,7 +29,8 @@ param(
     [switch]$Register,
     [switch]$Unregister,
     [switch]$Pause,
-    [switch]$Resume
+    [switch]$Resume,
+    [switch]$Headless
 )
 
 $ErrorActionPreference = 'Continue'
@@ -101,27 +102,25 @@ if ($Register -or $Unregister) {
         else { schtasks /Delete /TN $taskName /F 2>$null; Write-Host "== removed (schtasks): $taskName" }
         exit 0
     }
-    # hidden launcher: a plain "powershell -WindowStyle Hidden" task still
-    # flashes a console on every poll (annoying at a 2-minute cadence), so the
-    # task launches wscript with this tiny vbs that runs the poll with NO
-    # window at all. Kept in %USERPROFILE%\.git-sync\ - outside any repo, so
-    # add -A can never sweep it into a commit.
-    $vbsDir = Join-Path $env:USERPROFILE '.git-sync'
-    $vbs = Join-Path $vbsDir 'invisible.vbs'
-    if (-not (Test-Path -LiteralPath $vbsDir)) { New-Item -ItemType Directory -Force -Path $vbsDir | Out-Null }
-    if (-not (Test-Path -LiteralPath $vbs)) {
-        $vbsText = "' git-sync watcher launcher - run a command with no window flash`r`n" +
-                   'CreateObject("WScript.Shell").Run WScript.Arguments(0), 0, False'
-        [System.IO.File]::WriteAllText($vbs, $vbsText)
-    }
-    $inner = 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"{0}\"' -f $PSCommandPath
-    $arg = '"{0}" "{1}"' -f $vbs, $inner
+    # launch mode: plain powershell -WindowStyle Hidden (proven; a brief
+    # console flash per poll). The v2.4.4 wscript+vbs "invisible launcher"
+    # turned out fragile - Windows 11 is retiring VBScript and the watchers
+    # were left silently dead (LastTaskResult 0 but nothing actually ran).
+    # For ZERO window use -Headless: the task logs on via S4U and runs in
+    # session 0, no VBS involved. If pushes stop working under -Headless
+    # (credential isolation), re-register without it.
+    $arg = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "{0}"' -f $PSCommandPath
     try {
-        $action  = New-ScheduledTaskAction -Execute 'wscript.exe' -Argument $arg
+        $action  = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $arg
         $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddMinutes(1) `
                     -RepetitionInterval (New-TimeSpan -Minutes $Interval) `
                     -RepetitionDuration (New-TimeSpan -Days 3650)
-        Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Force | Out-Null
+        if ($Headless) {
+            $principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType S4U -RunLevel Limited
+            Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Principal $principal -Force | Out-Null
+        } else {
+            Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Force | Out-Null
+        }
         Write-Host "== scheduled task registered: $taskName (every $Interval min)" -ForegroundColor Green
     } catch {
         Write-Host "[ERROR] Register-ScheduledTask failed: $($_.Exception.Message)" -ForegroundColor Red
@@ -135,7 +134,8 @@ if ($Register -or $Unregister) {
     Write-Host "     $CheckCmd"
     Write-Host "== remove any time with:  .\watch.ps1 -Unregister"
     Write-Host "== pause / resume:        .\watch.ps1 -Pause  /  .\watch.ps1 -Resume"
-    Write-Host "== the polls run through an invisible launcher (no console flash)"
+    if ($Headless) { Write-Host "== headless mode: runs in session 0, no window at all (experimental)" }
+    else { Write-Host "== note: each poll briefly flashes a console; -Headless = none (experimental)" }
     exit 0
 }
 
