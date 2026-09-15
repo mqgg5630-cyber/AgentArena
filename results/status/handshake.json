@@ -1,9 +1,9 @@
 {
-    "round":  1,
-    "arena_state":  "awaiting_check",
-    "local_state":  "passed",
-    "arena_updated":  "2026-09-15 07:39:45",
-    "local_updated":  "2026-09-15 15:48:18",
-    "host":  "LAPTOP-R77M5D6M",
-    "note":  "round 1：文档线第一阶段回归 - gate + 本机 PowerShell 编码校验（docs/benchmark-adapter-architecture-review.md、.skills/*、DEVLOG）"
+  "round": 1,
+  "arena_state": "accepted",
+  "local_state": "passed",
+  "arena_updated": "2026-09-15 07:50:42",
+  "local_updated": "2026-09-15 15:48:18",
+  "host": "LAPTOP-R77M5D6M",
+  "note": "round 1：文档线第一阶段回归 - gate + 本机 PowerShell 编码校验（docs/benchmark-adapter-architecture-review.md、.skills/*、DEVLOG）"
 }
