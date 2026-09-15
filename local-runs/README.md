@@ -35,7 +35,8 @@ node scripts\local-runner-validate.mjs --job local-runs\jobs\<jobId>.job.json   
 ```
 
 本体是 `code/local-runner.mjs`（Node，零依赖）；`.ps1` 只是定位 node 的薄包装。
-挂钩自己的原始记录在 `results/status/local-runner-drain.txt`（含 CWD / node 路径 / 队列内容 / exit）。
+挂钩自己的原始记录在 `results/status/local-runner-drain.txt`（含 CWD / node 路径 / 队列内容 / exit）；
+排障报告在 `results/status/diagnose-watcher.txt`（`code\diagnose-watcher.ps1` 生成）。
 设计说明、CLI 解析顺序、本机策略键、退出码含义见 `docs/local-runner-protocol.md` 第 10 节。
 
 ## 相关命令（本机）

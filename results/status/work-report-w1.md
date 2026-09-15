@@ -6,7 +6,7 @@
 
 - 角色：**工作会话 1** —— 负责【local-runner 执行协议 + 执行器】
 - 工作分支：`arena/01a0a3ee-agentarena`（只在本分支读写；不合并他人分支、不动 runner 核心代码）
-- 技能版本：**git-sync v2.4.6**（v2.4.6 = 撤回 v2.4.4 的 wscript+vbs 隐形启动器，本机值守已恢复）
+- 技能版本：**git-sync v2.4.7**（2.4.6 = 撤回 wscript+vbs 隐形启动器；2.4.7 = 检查日志加 elapsed + 空输出显式标注）
 - 最近更新：2026-09-15（S2 本机检查通过；探针 job 仍在队列，见 §三点五）
 
 ## 〇、合并提醒（**给 3d6 与汇总会话**）
@@ -64,6 +64,14 @@
 
 ## 三点五、S2 本机验收现状（**探针 job 尚未被执行**）
 
+### 轮次台账
+
+| 轮 | 本机判定 | 日志里的 `cmd:` | 副作用证据 | 结论 |
+|---|---|---|---|---|
+| 1 | passed | `powershell ... code/local_check.ps1` | 无 | 假通过（空转） |
+| 2 | passed | 同上 | 无 | 假通过（空转） |
+| 3 | passed | 同上 | 无 | **假通过，根因已定位**：该轮读取的是 round 2 时（16:31）拉下的旧配置；16:42 推的原生链要下一轮才生效 |
+
 本机 round 1 判定：`local_state=passed`（exit 0）→ 挂钩没有失败，**但队列里的 probe job 仍未被消费**（远端无 `local-runs/results/20260915-001-capability-probe/`）。
 
 已排除/已定位的线索：
@@ -71,11 +79,20 @@
 1. 本机那笔提交只含 `check_r1_*.txt` + `handshake.json`，`local-runs/` 无任何变化 → 执行器没有产出结果；
 2. `check_r1_20260915-162508.txt` 全文只有 2 行（129 字节）：`passed (exit 0)` + `cmd: ...`；round 2 同样，且**新挂钩写的 `results/status/local-runner-drain.txt` 与 `local-runs/drain-last.json` 都不存在** → 结论：`watch.ps1` 的 `powershell -NoProfile -File code/local_check.ps1` 在这台机器上**没有真正执行脚本**（不是 node 缺失，那会是 exit 127 → failed）；
 3. 挂钩若跑了而 node 缺失，会是 `failed`（wrapper exit 127）→ 本次是 `passed`，所以要么挂钩没执行（本机树旧），要么执行器认为"无活可干"；
-4. 本轮推送的**自带证据**正是为了下一轮一次性区分这两种情况 —— 见 `docs/local-runner-protocol.md` §10.3.1。
+4. 自带证据（`local-runner-drain.txt` / `drain-last.json`）正是为了一次性区分这两种情况 —— 见 `docs/local-runner-protocol.md` §10.3.1；
+5. **round 3 定论**：日志回显 `cmd: powershell ...` 证明本机读到的仍是旧 `check_cmd`——`watch.ps1` 的固有滞后（poll 开头读配置 + 空闲轮不 pull）。处理 round 3 的那次 poll 已把 worktree 更新到新配置，**round 4 即验证原生链**。
 
 ## 四、下一步
 
-1. **真机验证（job 仍在队列）** —— 两条命令：
+1. **round 4（我发，无需你操作）**：验证原生链是否消费 probe job —— 通过标准仍是「drain 证据 + job 被消费」。
+2. **若 round 4 仍不成**：本机执行三连（兜底 + 取证）：
+   ```powershell
+   .\sync.ps1
+   .\code\drain-and-push.ps1 "results: probe run"
+   .\code\diagnose-watcher.ps1
+   ```
+   `diagnose-watcher.txt` 会记录 HEAD/stash/有效 check_cmd/工具可用性/队列/`Invoke-Expression` 复现结果，一次定位。
+3. （历史记录）**真机验证（job 仍在队列）** —— 两条命令：
    ```powershell
    .\sync.ps1                      # 拉到本轮（新 check_cmd + drain-and-push.ps1）
    .\code\drain-and-push.ps1      # 排空队列 + 提交 + 推送（不等值守）

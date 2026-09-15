@@ -513,6 +513,7 @@ if (Test-Path '.\code\local-runner.ps1') {
 | `code/local_check.sh` | **当前 check_cmd**（原生链）：排空队列 → 跑 gate。**不经 PowerShell**，见 §10.3.2 |
 | `code/local_check.ps1` | 旧挂钩（保留作参考；本机实测 watcher 的 `powershell -File` 链空转，不再作为入口） |
 | `code/drain-and-push.ps1` | **人工兜底一条命令**：排空队列 + 提交 + 推送（不等值守） |
+| `code/diagnose-watcher.ps1` | **取证一条命令**：写 `results/status/diagnose-watcher.txt`（HEAD/stash/有效 check_cmd/工具可用性/队列/drain 输出/`Invoke-Expression` 复现）——"日志说 passed 但什么都没发生"时先跑它 |
 | `local-runs/drain-last.json` | **执行器每轮都写**（沙箱内被护栏拦下时也写，reason 标 `sandbox-environment`）的结构化证据（`ran`/`reason`/`jobsSeen`/`results`/`exitCode`）；队列没被消费时靠它区分"挂钩没跑"与"跑了但没活" |
 | `results/status/local-runner-drain.txt` | **挂钩自己写**的原始记录（时间/主机/CWD/node 路径/runner 是否存在/队列内容/exit/完整 stdout）——因为 `watch.ps1` 的输出捕获在个别机器上会返回空日志 |
 
@@ -584,11 +585,16 @@ bash code/check_all.sh                    # gate
 任一失败即非零退出 → 值守判 `failed`。若计划任务的 PATH 上没有 bash，把 `check_cmd` 换回
 `powershell ... code/local_check.ps1`（旧挂钩仍在），或改用 `cmd /c` 包装。
 
+**改动生效有"一轮滞后"（重要）**：`watch.ps1` 在**每次 poll 开头**读配置，之后才同步代码；而空闲轮（无待处理请求）**根本不会 pull**。
+所以换了 `check_cmd` 之后，**处理请求的那一轮用的还是旧命令**，要再发一轮才生效——
+日志里回显的 `cmd:` 行就是判断依据（本轮 round 3 日志显示旧 powershell 链，正是这个原因，不是代码没生效）。
+
 **人工兜底（推荐在排障时用）**：
 
 ```powershell
 .\sync.ps1                          # 先拉到最新
 .\code\drain-and-push.ps1          # 排空队列 + 提交 + 推送，一条命令
+.\code\diagnose-watcher.ps1        # 还不对劲时：取证报告（会被下一次 push 带上分支）
 ```
 
 ### 10.3.3 沙箱护栏（别再让 job 死在错误的地方）
