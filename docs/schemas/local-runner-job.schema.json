@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mqgg5630-cyber/AgentArena/docs/schemas/local-runner-job.schema.json",
+  "title": "AgentArena local-runner job (v1.0)",
+  "description": "A unit of work proposed by an Arena session and executed on the user's real machine. Spec: docs/local-runner-protocol.md. Stored as local-runs/jobs/<jobId>.job.json.",
+  "type": "object",
+  "required": ["schemaVersion", "jobId", "createdAt", "kind", "requestedBy", "reason", "spec"],
+  "additionalProperties": true,
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "jobId": {
+      "type": "string",
+      "pattern": "^[0-9]{8}-[0-9]{3}-[a-z0-9][a-z0-9-]{2,39}$",
+      "description": "<YYYYMMDD>-<NNN>-<slug>; NNN is a per-day sequence starting at 001."
+    },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "kind": { "enum": ["benchmark", "probe", "command"] },
+    "requestedBy": {
+      "type": "object",
+      "required": ["branch", "session"],
+      "additionalProperties": false,
+      "properties": {
+        "branch": { "type": "string", "minLength": 1 },
+        "session": { "type": "string", "minLength": 1 }
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 3,
+      "description": "One line explaining why this job should run; copied into the ledger."
+    },
+    "spec": { "$ref": "#/$defs/spec" },
+    "requirements": { "$ref": "#/$defs/requirements" },
+    "timeoutSeconds": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 7200,
+      "description": "Defaults: benchmark 3600, command 600, probe 120. Executor cap: 7200."
+    },
+    "priority": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9,
+      "default": 5,
+      "description": "Lower runs first within one drain."
+    },
+    "dependsOn": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[0-9]{8}-[0-9]{3}-[a-z0-9][a-z0-9-]{2,39}$" },
+      "default": []
+    },
+    "idempotencyKey": {
+      "type": "string",
+      "minLength": 1,
+      "description": "If a terminal result already exists for this key, the executor reuses it instead of running again."
+    },
+    "artifacts": { "$ref": "#/$defs/artifactsPolicy" },
+    "notes": { "type": "string" }
+  },
+  "allOf": [
+    { "if": { "properties": { "kind": { "const": "benchmark" } }, "required": ["kind"] }, "then": { "properties": { "spec": { "$ref": "#/$defs/benchmarkSpec" } } } },
+    { "if": { "properties": { "kind": { "const": "probe" } }, "required": ["kind"] }, "then": { "properties": { "spec": { "$ref": "#/$defs/probeSpec" } } } },
+    { "if": { "properties": { "kind": { "const": "command" } }, "required": ["kind"] }, "then": { "properties": { "spec": { "$ref": "#/$defs/commandSpec" } } } }
+  ],
+  "$defs": {
+    "spec": {
+      "type": "object"
+    },
+    "benchmarkSpec": {
+      "type": "object",
+      "required": ["repo", "task", "agents"],
+      "additionalProperties": false,
+      "properties": {
+        "repo": { "type": "string", "minLength": 1, "description": "Repo-relative path; must not escape the repository root." },
+        "task": { "type": "string", "minLength": 1 },
+        "agents": {
+          "type": "array",
+          "minItems": 1,
+          "description": "Same shape as UiRunPayload.agents[]. variantId is DERIVED (baseAgentId[-profile][-model][-reasoning]) - never author it here.",
+          "items": {
+            "type": "object",
+            "required": ["baseAgentId"],
+            "additionalProperties": false,
+            "properties": {
+              "baseAgentId": { "type": "string", "minLength": 1 },
+              "displayLabel": { "type": "string" },
+              "config": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "model": { "type": "string" },
+                  "reasoningEffort": { "type": "string" },
+                  "providerProfileId": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maxConcurrency": { "type": "integer", "minimum": 1 },
+            "scoreMode": { "enum": ["practical", "balanced", "issue-resolution", "efficiency-first", "rotating-tasks", "comprehensive"] },
+            "tokenBudget": { "type": "number", "exclusiveMinimum": 0 },
+            "probeAuth": { "type": "boolean" },
+            "updateSnapshots": { "type": "boolean" },
+            "cleanupWorkspaces": { "type": "boolean" },
+            "agentTimeoutMs": { "type": "integer", "minimum": 1000 },
+            "repeat": { "type": "integer", "minimum": 1 },
+            "resume": { "type": "string", "description": "Run directory to resume from, inside local-runs/.work/<jobId>." },
+            "locale": { "enum": ["en", "zh-CN"] },
+            "jsonEvents": { "type": "boolean", "default": true, "description": "Capture the NDJSON progress stream into console.ndjson (kept only on failure by default)." }
+          }
+        }
+      }
+    },
+    "probeSpec": {
+      "type": "object",
+      "required": ["probe"],
+      "additionalProperties": false,
+      "properties": {
+        "probe": { "enum": ["hardware", "doctor", "nvidia-smi", "conda-env-list", "agentarena-version"] }
+      }
+    },
+    "commandSpec": {
+      "type": "object",
+      "required": ["shell", "command"],
+      "additionalProperties": false,
+      "properties": {
+        "shell": { "enum": ["powershell", "cmd", "bash"] },
+        "command": { "type": "string", "minLength": 1 },
+        "args": { "type": "array", "items": { "type": "string" } },
+        "cwd": { "type": "string", "description": "Repo-relative working directory; defaults to the repository root." },
+        "allowRisky": { "type": "boolean", "default": false, "description": "Required for kind=command; the machine must also set allowRiskyCommands=true in local-runs/state/settings.json." }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "gpu": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "required": { "type": "boolean", "default": false },
+            "minVramGb": { "type": "number", "minimum": 0 },
+            "minCudaDriver": { "type": "string" },
+            "nameContains": { "type": "string" }
+          }
+        },
+        "condaEnv": { "type": "string" },
+        "python": { "type": "string", "description": "Version constraint, e.g. \">=3.10\"." },
+        "tools": { "type": "array", "items": { "type": "string" }, "description": "Commands that must be on PATH (adapter CLIs)." },
+        "minFreeDiskGb": { "type": "number", "minimum": 0 },
+        "minFreeRamGb": { "type": "number", "minimum": 0 }
+      }
+    },
+    "artifactsPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["manifest-only", "summary", "full"], "default": "summary" },
+        "include": { "type": "array", "items": { "type": "string" }, "description": "Extra globs, relative to the run output root." },
+        "maxFileMb": { "type": "number", "exclusiveMinimum": 0, "default": 5 },
+        "maxTotalMb": { "type": "number", "exclusiveMinimum": 0, "default": 20 }
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "jobId": "20260915-001-demo-smoke",
+  "createdAt": "2026-09-15T07:40:00Z",
+  "kind": "benchmark",
+  "requestedBy": { "branch": "arena/01a0a3ee-agentarena", "session": "arena-01a0a3ee" },
+  "reason": "端到端首跑：验证 local-runner 队列 -> 本机执行 -> 回传判定的整条链路（demo 适配器，不依赖外部 CLI）",
+  "spec": {
+    "repo": ".",
+    "task": "examples/taskpacks/demo-repo-health.json",
+    "agents": [{ "baseAgentId": "demo-fast" }, { "baseAgentId": "demo-thorough" }],
+    "options": {
+      "maxConcurrency": 1,
+      "scoreMode": "balanced",
+      "locale": "zh-CN",
+      "probeAuth": false,
+      "jsonEvents": true
+    }
+  },
+  "requirements": {
+    "tools": ["node", "git"],
+    "minFreeDiskGb": 5
+  },
+  "timeoutSeconds": 900,
+  "priority": 3,
+  "idempotencyKey": "demo-smoke-v1",
+  "artifacts": { "mode": "summary", "maxFileMb": 5, "maxTotalMb": 20 }
+}

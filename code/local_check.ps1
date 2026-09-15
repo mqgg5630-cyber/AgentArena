@@ -28,10 +28,24 @@ if (Test-Path -LiteralPath '.\code\check_all.sh') {
     if ($LASTEXITCODE -ne 0) { Write-Output '[FAIL] gate failed'; $fail = 1 }
 }
 
-# 2. example: the deliverable must exist and not be empty
-# if (-not (Test-Path '.\deliverable\final.pptx')) {
-#     Write-Host '[FAIL] deliverable\final.pptx missing' -ForegroundColor Red; $fail = 1
-# }
+# 2. AgentArena-specific checks (pnpm monorepo: packages/ + apps/ + tests/).
+#    Enable the ones that fit; the heavier ones cost a few minutes.
+#    Note: keep this file ASCII-only (Windows PowerShell 5.1 / GBK).
+#
+# 2a. the workspace must build and the unit tests must be green
+# pnpm build
+# if ($LASTEXITCODE -ne 0) { Write-Output '[FAIL] pnpm build'; $fail = 1 }
+# pnpm test
+# if ($LASTEXITCODE -ne 0) { Write-Output '[FAIL] pnpm test'; $fail = 1 }
+#
+# 2b. lint + typecheck (fast, no build output needed)
+# pnpm lint
+# if ($LASTEXITCODE -ne 0) { Write-Output '[FAIL] pnpm lint'; $fail = 1 }
+# pnpm typecheck
+# if ($LASTEXITCODE -ne 0) { Write-Output '[FAIL] pnpm typecheck'; $fail = 1 }
+#
+# 2c. the deliverable of a benchmark round (uncomment what the round produces):
+# if (-not (Test-Path '.\results')) { Write-Output '[FAIL] results\ missing'; $fail = 1 }
 
 # 3. add your own checks here ...
 

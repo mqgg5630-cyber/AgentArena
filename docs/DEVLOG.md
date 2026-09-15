@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-09-15] local-runner 协议选型：结构化 job 队列 + `check_cmd` 挂钩，而不是把参数写进握手 note
+
+- 现象/目标：沙箱没有本机的 GPU / conda / CLI agent，真机执行必须"派活—执行—回传"。git-sync 的自动验证循环只有**单槽** `handshake.json`，note 是一句自然语言——塞不下 agents/options/requirements/回传策略，也做不到可审计、可重放、幂等重试。
+- 根因/思路：门铃与内容是两件事。握手文件只该回答"有没有活"，"活是什么"必须结构化落盘。另一条路是把握手扩成多槽队列——但那要改 `watch.ps1` 和 handshake 语义，会牵动所有已装技能的仓库（含其它仓库的存量值守任务），收益不抵风险。
+- 解法：新增 `local-runs/`——`jobs/<jobId>.job.json`（沙箱写、进 git）→ 本机执行器排空队列 → `results/<jobId>/{status.json,artifacts.json,ledger.jsonl}` 回传判定。触发完全不改技能：`code/local_check.ps1`（`check_cmd`）里追加一行调用执行器即可，`watch.ps1` 与 `packages/runner` 零改动。
+- 教训/可复用点：[通用] 复用现成队列/握手设施时，先分清"通知"与"载荷"——载荷塞进通知（自然语言 note、单槽状态文件）会在第三个字段就崩；把载荷结构化落盘、只让通知做触发，能保住下游所有既有消费者不改。
+
 ## [2026-07-16] 工作台 PWA：首次安装 service worker 的 controllerchange 不应 reload
 
 - 现象/目标：加离线 PWA（sw.js + 注册）后，workbench 三个 e2e 报 `errors` 数组非空，命中 `assert.deepEqual(errors, [])`；监控到 `/api/ui-info`、`/api/agent-detection`、`/api/taskpacks`、`/api/provider-profiles` 首屏全部 `net::ERR_ABORTED`。
