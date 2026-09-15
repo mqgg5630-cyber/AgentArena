@@ -14,6 +14,7 @@
 | `results/<jobId>/` | ✅ | 回传区：`status.json`（判定）、`artifacts.json`、`console.log`、摘要/报告 |
 | `results/<jobId>/ack.json` | ✅ | **沙箱侧**回执（`decision` / `nextStep`） |
 | `ledger.jsonl` | ✅ | 追加式台账，一行一事件 |
+| `drain-last.json` | ✅ | 执行器每轮写的证据（跑了没 / 为什么没跑 / 队列看到什么 / 结果）——排障第一步 |
 | `state/` | ❌ | 本机私有：`lease.json`（租约）、`settings.json`（策略：允许哪些 kind/探针、回传上限）。样例见 `settings.example.json`（拷进 `state/` 再改） |
 | `.work/<jobId>/` | ❌ | 执行现场：`agentarena run` 的原始输出与临时工作区 |
 
@@ -33,6 +34,7 @@ node scripts\local-runner-validate.mjs --job local-runs\jobs\<jobId>.job.json   
 ```
 
 本体是 `code/local-runner.mjs`（Node，零依赖）；`.ps1` 只是定位 node 的薄包装。
+挂钩自己的原始记录在 `results/status/local-runner-drain.txt`（含 CWD / node 路径 / 队列内容 / exit）。
 设计说明、CLI 解析顺序、本机策略键、退出码含义见 `docs/local-runner-protocol.md` 第 10 节。
 
 ## 相关命令（本机）

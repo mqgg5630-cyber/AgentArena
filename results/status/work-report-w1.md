@@ -6,8 +6,8 @@
 
 - 角色：**工作会话 1** —— 负责【local-runner 执行协议 + 执行器】
 - 工作分支：`arena/01a0a3ee-agentarena`（只在本分支读写；不合并他人分支、不动 runner 核心代码）
-- 技能版本：**git-sync v2.4.5**
-- 最近更新：2026-09-15（S2 已推送）
+- 技能版本：**git-sync v2.4.6**（v2.4.6 = 撤回 v2.4.4 的 wscript+vbs 隐形启动器，本机值守已恢复）
+- 最近更新：2026-09-15（S2 本机检查通过；探针 job 仍在队列，见 §三点五）
 
 ## 〇、合并提醒（**给 3d6 与汇总会话**）
 
@@ -31,6 +31,7 @@
 
 | 轮次 | 提交 | 内容 | 验证状态 |
 |---|---|---|---|
+| 4 | （见最新提交） | 技能升级 v2.4.6（配置/集合全保留）；**挂钩自带证据**：`results/status/local-runner-drain.txt` + `local-runs/drain-last.json`；清掉 S1 残留的 `results/status/work-report.md` | 沙箱已验：自检 16/16、gate 三项 OK、drain-last.json 两条路径（有活/无活）实测 |
 | 3 | （见最新提交） | **S2 执行器**：`code/local-runner.mjs`（Node 本体）+ `code/local-runner.ps1`（ASCII 包装）+ `scripts/local-runner-validate.mjs`（零依赖校验器）+ `local_check.ps1` 队列挂钩 + `settings.example.json` + 协议 §10/§11.5 更新；`local-runs` 进 `download_sets`（新增 `runs` 集合，`final` 含 `local-runs/results`）；队列投放首个真机 job `20260915-001-capability-probe` | **沙箱已验**：自检 16/16；假仓库端到端 12 个场景全通过（见下 §三） |
 | 2 | `d80cf11` | **S1 协议交付**：`docs/local-runner-protocol.md` + 两份 JSON Schema + `local-runs/` 骨架 + 示例 + DEVLOG 选型记录 | 沙箱已验：ajv(draft2020) 校验通过；3 个反例被拒 |
 | 1 | `f4da429` | 安装 git-sync v2.4.5（技能入库 + 根目录 10 个 `.ps1` + gate + `.gitignore` 反排除） | 沙箱已验：干净克隆 gate 三项 OK |
@@ -60,10 +61,23 @@
 **设计取舍**：执行器本体改用 Node 而非 PowerShell —— 沙箱无 pwsh（PowerShell 写的东西这里跑不了），
 且 PS 5.1 `ConvertTo-Json` 会把单元素数组塌成对象（`artifacts[]`/`scores[]` 会坏）。`.ps1` 保留为 ASCII 包装，入口名不变。
 
+## 三点五、S2 本机验收现状（**探针 job 尚未被执行**）
+
+本机 round 1 判定：`local_state=passed`（exit 0）→ 挂钩没有失败，**但队列里的 probe job 仍未被消费**（远端无 `local-runs/results/20260915-001-capability-probe/`）。
+
+已排除/已定位的线索：
+
+1. 本机那笔提交只含 `check_r1_*.txt` + `handshake.json`，`local-runs/` 无任何变化 → 执行器没有产出结果；
+2. `check_r1_20260915-162508.txt` 全文只有 2 行（129 字节）：`passed (exit 0)` + `cmd: ...` → **`watch.ps1` 的 `Invoke-Expression $CheckCmd 2>&1` 在这台机器上捕获不到任何输出**（历史所有 check 日志都只有 2 行，是长期现象）；
+3. 挂钩若跑了而 node 缺失，会是 `failed`（wrapper exit 127）→ 本次是 `passed`，所以要么挂钩没执行（本机树旧），要么执行器认为"无活可干"；
+4. 本轮推送的**自带证据**正是为了下一轮一次性区分这两种情况 —— 见 `docs/local-runner-protocol.md` §10.3.1。
+
 ## 四、下一步
 
-1. **真机验证（已投放 job）**：`20260915-001-capability-probe` 在队列里，等值守排空。
-   看 `local-runs/results/20260915-001-capability-probe/{status.json,probe.json,console.log}`。
+1. **真机验证（job 仍在队列）**：最省事是**手动排空一次**（一条命令，等价于值守那步）：
+   `.\code\local-runner.ps1 -DrainOnce`（或 `node code\local-runner.mjs --drain-once`）——
+   它会直接执行 probe 并 push 结果，无需等轮询；值守轮询随后照常跑（队列空 → 秒退通过）。
+   若只想确认挂钩是否生效：看 `results/status/local-runner-drain.txt` 是否被刷新。
 2. **通过后**：据 `probe.json` 的真实情况写第二个 job（benchmark，只挑 `doctor` 里 ready 的 agent，
    显存/环境按实际填 `requirements`），真机跑 **demo 任务包** 打基线。
 3. 若 `agentarena` CLI 解析不到 → 需要你在本机 `pnpm build`（或全局安装）后重跑探针；

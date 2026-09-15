@@ -1297,6 +1297,32 @@ function parseArgs(argv) {
   return options;
 }
 
+/**
+ * Structured evidence for the sandbox: written on EVERY drain attempt (even
+ * "nothing to do"). The watcher's own output capture has proven unreliable on
+ * some machines, so this tracked file is how the agent verifies that the runner
+ * actually ran and what it saw. See docs/local-runner-protocol.md section 10.
+ */
+function writeDrainReport(report) {
+  try {
+    writeJsonAtomic(path.join(REPO_ROOT, "local-runs", "drain-last.json"), {
+      schemaVersion: SCHEMA_VERSION,
+      ts: nowIso(),
+      host: os.hostname(),
+      repoRoot: REPO_ROOT,
+      cwd: process.cwd(),
+      node: process.version,
+      exitCode: report.exitCode,
+      ran: report.ran,
+      reason: report.reason,
+      jobsSeen: report.jobsSeen ?? [],
+      results: report.results ?? [],
+    });
+  } catch (error) {
+    log(`warn: could not write local-runs/drain-last.json (${error instanceof Error ? error.message : String(error)})`);
+  }
+}
+
 async function main() {
   const options = parseArgs(process.argv.slice(2));
   if (options.help) return 0;
@@ -1307,6 +1333,7 @@ async function main() {
   const lease = readLease();
   if (lease && leaseActive(lease) && !options.force && lease.jobId !== options.jobId) {
     log(`busy: ${lease.jobId} holds the lease until ${lease.expiresAt}`);
+    writeDrainReport({ exitCode: 0, ran: false, reason: `busy: lease held by ${lease.jobId}`, jobsSeen: [], results: [] });
     return 0;
   }
 
@@ -1325,6 +1352,13 @@ async function main() {
 
   if (ready.length === 0) {
     log("no queued jobs");
+    writeDrainReport({
+      exitCode: 0,
+      ran: false,
+      reason: blocked.length > 0 ? `no ready jobs (${blocked.length} blocked/waiting)` : "no queued jobs",
+      jobsSeen: blocked.map((candidate) => ({ jobId: candidate.jobId, reason: candidate.reason })),
+      results: [],
+    });
     return 0;
   }
 
@@ -1334,10 +1368,16 @@ async function main() {
 
   if (options.dryRun) {
     for (const candidate of selected) log(`would run: ${candidate.job.jobId} (${candidate.job.kind})`);
+    writeDrainReport({
+      exitCode: 0, ran: false, reason: "dry-run",
+      jobsSeen: ready.map((candidate) => ({ jobId: candidate.job.jobId, kind: candidate.job.kind })),
+      results: [],
+    });
     return 0;
   }
 
   let failed = 0;
+  const results = [];
   for (const candidate of selected) {
     if (leaseActive(readLease())) {
       log(`stopping: lease taken by ${readLease().jobId}`);
@@ -1345,8 +1385,14 @@ async function main() {
     }
     ledgerAppend({ jobId: candidate.job.jobId, event: "queued", by: candidate.job.requestedBy?.session ?? "unknown" });
     const status = await runJob(candidate.file, candidate.job, settings, options);
+    results.push({ jobId: status.jobId, state: status.state, outcome: status.verdict?.outcome ?? null, error: status.error?.code ?? null });
     if (["failed", "timed_out"].includes(status.state)) failed = 1;
   }
+  writeDrainReport({
+    exitCode: failed, ran: true, reason: null,
+    jobsSeen: ready.map((candidate) => ({ jobId: candidate.job.jobId, kind: candidate.job.kind })),
+    results,
+  });
   return failed;
 }
 

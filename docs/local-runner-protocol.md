@@ -511,6 +511,8 @@ if (Test-Path '.\code\local-runner.ps1') {
 | `code/local-runner.ps1` | **薄包装**（纯 ASCII）：定位 node 并转发参数，保留文档里的入口名 |
 | `scripts/local-runner-validate.mjs` | **校验器**（零依赖，镜像两份 JSON Schema）：`--job` / `--status`，沙箱侧推之前先自查 |
 | `code/local_check.ps1` | `check_cmd` 挂钩：每轮值守先排空队列（无 job 时 <1s 返回，不影响普通检查） |
+| `local-runs/drain-last.json` | **执行器每轮都写**的结构化证据（`ran`/`reason`/`jobsSeen`/`results`/`exitCode`）；队列没被消费时靠它区分"挂钩没跑"与"跑了但没活" |
+| `results/status/local-runner-drain.txt` | **挂钩自己写**的原始记录（时间/主机/CWD/node 路径/runner 是否存在/队列内容/exit/完整 stdout）——因为 `watch.ps1` 的输出捕获在个别机器上会返回空日志 |
 
 执行器本体用 Node 而不是 PowerShell，是**可验证性**驱动的选择：沙箱里没有 pwsh（改写的东西没法真跑），
 而 PowerShell 5.1 的 `ConvertTo-Json` 会把单元素数组塌成对象，正好是 `artifacts[]` / `scores[]` / `unmet[]` 最要命的地方。
@@ -552,6 +554,16 @@ node scripts\local-runner-validate.mjs --job local-runs\jobs\X.job.json   # 校�
 `settings.arenaCli` → 环境变量 `AGENTARENA_CLI`(+`AGENTARENA_CLI_ARGS`) → PATH 上的 `agentarena` →
 `node packages/cli/dist/index.js`（仓库内已构建时）。四者都没有 → `benchmark` job 立刻 `failed`（`engine-error`），
 不会假装跑过。
+
+### 10.3.1 排障：队列没被消费时先看这两个文件
+
+1. `results/status/local-runner-drain.txt` **不存在** → 挂钩没执行（本机 checkout 是旧的，或 `code/local_check.ps1` 被本地改动覆盖）。
+2. 存在但 `runner: ... (MISSING)` / `node: (not found)` → 树旧或 PATH 没带上 node（计划任务可用 `Get-Command node` 复核）。
+3. 存在且 `exit: 0` + `local-runs/drain-last.json.reason = "no queued jobs"` → 挂钩跑了、队列是空的：检查本机是否真的 pull 到了带 job 的那次提交。
+4. 存在且 `exit: 1` → job 本身失败，直接看 `local-runs/results/<jobId>/status.json`。
+
+> 背景：`watch.ps1` 用 `Invoke-Expression $CheckCmd 2>&1` 捕获检查输出，但在本机实测会返回**空日志且 exit 0**
+> （历史上所有 `results/status/check_rN_*.txt` 都只有两行）。所以不要依赖它来判断执行器有没有跑，以上两个文件才是据。
 
 ### 10.4 实现要点（原检查清单）
 
