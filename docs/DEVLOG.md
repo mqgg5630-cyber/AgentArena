@@ -5,6 +5,13 @@
 
 ---
 
+## [2026-09-15] fork 仓库的 .gitignore 会静默吃掉 git-sync 技能目录（干净克隆必挂 gate）
+
+- 现象/目标：给 AgentArena fork 装 git-sync v2.4.3。旧分支（arena/01a0a356-agentarena）只提交了根目录 .ps1 + code/，`skills/` 整个没进库；于是本机干净克隆里 `code/check_all.sh` 第 2 步（校验 `skills/git-sync/sync.config.json`）必然失败——`local_check.ps1` 第 1 步就是跑这个 gate，等于每轮本机自检都判失败。
+- 根因/思路：`.gitignore` 的 "AI Assistant local configs" 段有 `skills/`（AI 助手模板常见规则），而 `agent-install.sh` 恰好把配置写在 `skills/git-sync/sync.config.json`——安装产物被静默忽略，`git add -A` 永远看不到它；旧分支本机那轮自检能过，是因为本机额外跑过一次本地安装（技能目录在本机存在但不受版本控制）。
+- 解法：`.gitignore` 改 `skills/*` + `!skills/git-sync/`（精确例外，其它 skills/ 仍忽略），技能目录连同配置入库；安装后 `git check-ignore skills/git-sync/sync.config.json` 必须无输出、`bash code/check_all.sh` 必须三项全 OK。
+- 教训/可复用点：[通用] 给任何仓库装 git-sync（或任何"文件型工具"）前，先 `git check-ignore` 目标路径；带 AI 助手忽略规则（skills/ / .claude/ / .codex/ …）的仓库会静默吞掉安装产物，装了却不在库里、本机 clone 缺文件、gate/自检连环失败。
+
 ## [2026-07-16] 工作台 PWA：首次安装 service worker 的 controllerchange 不应 reload
 
 - 现象/目标：加离线 PWA（sw.js + 注册）后，workbench 三个 e2e 报 `errors` 数组非空，命中 `assert.deepEqual(errors, [])`；监控到 `/api/ui-info`、`/api/agent-detection`、`/api/taskpacks`、`/api/provider-profiles` 首屏全部 `net::ERR_ABORTED`。
